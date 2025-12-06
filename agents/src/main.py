@@ -6,7 +6,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 
 from .config.settings import settings
-from .api.routes import planning_router, emergency_router, health_router
+from .api.routes import planning_router, emergency_router, health_router, agent_query_router
 from .api.middleware import setup_cors, setup_middleware
 
 # Configure logging
@@ -32,6 +32,7 @@ setup_middleware(app)
 app.include_router(health_router, tags=["health"])
 app.include_router(planning_router)
 app.include_router(emergency_router)
+app.include_router(agent_query_router)
 
 
 @app.on_event("startup")
