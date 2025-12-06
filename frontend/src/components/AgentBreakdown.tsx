@@ -64,14 +64,15 @@ const agents = [
 ] as const;
 
 export default function AgentBreakdown({ details, priorityScore }: AgentBreakdownProps) {
-  const [selectedTab, setSelectedTab] = useState<string>('fitness');
-  
-  const sections = agents
-    .map(agent => ({
-      ...agent,
-      data: details[agent.key as keyof ReasoningDetails],
-    }))
-    .filter(section => section.data);
+  // Map all agents with their data (even if data is missing)
+  const sections = agents.map(agent => ({
+    ...agent,
+    data: details[agent.key as keyof ReasoningDetails],
+  }));
+
+  // Find first agent with data for initial tab, or default to first agent
+  const initialTab = sections.find(s => s.data)?.key || 'fitness';
+  const [selectedTab, setSelectedTab] = useState<string>(initialTab);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'success';
@@ -127,45 +128,60 @@ export default function AgentBreakdown({ details, priorityScore }: AgentBreakdow
       {/* Agent Tabs */}
       <Card className="border border-gray-200 dark:border-gray-700">
         <CardHeader className="pb-0">
-          <Tabs
-            selectedKey={selectedTab}
-            onSelectionChange={(key) => setSelectedTab(key as string)}
-            variant="underlined"
-            classNames={{
-              tabList: "gap-2 w-full relative rounded-none p-0 border-b border-divider",
-              cursor: "w-full bg-blue-500",
-              tab: "max-w-fit px-4 h-12",
-              tabContent: "group-data-[selected=true]:text-blue-600"
-            }}
-          >
-            {sections.map((section) => {
-              const Icon = section.icon;
-              const score = section.data?.score || 0;
-              return (
-                <Tab
-                  key={section.key}
-                  title={
-                    <div className="flex items-center gap-2">
-                      <Icon className="h-4 w-4" />
-                      <span className="font-medium">{section.label}</span>
-                      <Chip
-                        size="sm"
-                        color={getScoreColor(score)}
-                        variant="flat"
-                        className="ml-1"
-                      >
-                        {score}
-                      </Chip>
-                    </div>
-                  }
-                />
-              );
-            })}
-          </Tabs>
+           <Tabs
+             selectedKey={selectedTab}
+             onSelectionChange={(key) => setSelectedTab(key as string)}
+             variant="underlined"
+             classNames={{
+               tabList: "gap-1 w-full relative rounded-none p-0 border-b border-divider overflow-x-auto",
+               cursor: "w-full bg-blue-500",
+               tab: "max-w-fit px-3 h-12 text-xs sm:text-sm",
+               tabContent: "group-data-[selected=true]:text-blue-600"
+             }}
+           >
+             {sections.map((section) => {
+               const Icon = section.icon;
+               const score = section.data?.score || 0;
+               const hasData = !!section.data;
+               return (
+                 <Tab
+                   key={section.key}
+                   title={
+                     <div className="flex items-center gap-2 whitespace-nowrap">
+                       <Icon className="h-4 w-4 shrink-0" />
+                       <span className="font-medium hidden sm:inline">{section.label}</span>
+                       <span className="font-medium sm:hidden">{section.label.split(' ')[0]}</span>
+                       {hasData ? (
+                         <Chip
+                           size="sm"
+                           color={getScoreColor(score)}
+                           variant="flat"
+                           className="ml-1 shrink-0"
+                         >
+                           {score}
+                         </Chip>
+                       ) : (
+                         <Chip
+                           size="sm"
+                           color="default"
+                           variant="flat"
+                           className="ml-1 shrink-0"
+                         >
+                           N/A
+                         </Chip>
+                       )}
+                     </div>
+                   }
+                 />
+               );
+             })}
+           </Tabs>
         </CardHeader>
-        <CardBody className="pt-6">
-          {selectedAgent && selectedData && (
-            <div className="space-y-6">
+         <CardBody className="pt-6">
+           {selectedAgent && (
+             <div className="space-y-6">
+               {selectedData ? (
+                 <>
               {/* Agent Header */}
               <div className="flex items-start gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
                 <div className={cn(
@@ -225,7 +241,11 @@ export default function AgentBreakdown({ details, priorityScore }: AgentBreakdow
                   <CardBody className="p-4">
                     <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Current Status</p>
                     <p className="text-base font-bold text-gray-900 dark:text-white">
-                      {selectedData.status || selectedData.priority || selectedData.balance || 'N/A'}
+                      {('status' in selectedData && selectedData.status) || 
+                       ('priority' in selectedData && selectedData.priority) || 
+                       ('balance' in selectedData && selectedData.balance) || 
+                       ('position' in selectedData && selectedData.position) || 
+                       'N/A'}
                     </p>
                   </CardBody>
                 </Card>
@@ -272,12 +292,32 @@ export default function AgentBreakdown({ details, priorityScore }: AgentBreakdow
                       </p>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-        </CardBody>
-      </Card>
+                 </div>
+               )}
+               </>
+             ) : (
+               <div className="text-center py-12">
+                 <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                   {(() => {
+                     const Icon = selectedAgent.icon;
+                     return <Icon className="h-8 w-8 text-gray-400" />;
+                   })()}
+                 </div>
+                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                   {selectedAgent.label}
+                 </h3>
+                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                   {selectedAgent.description}
+                 </p>
+                 <p className="text-sm text-gray-600 dark:text-gray-400">
+                   No data available for this agent at this time.
+                 </p>
+               </div>
+             )}
+             </div>
+           )}
+         </CardBody>
+       </Card>
 
       {/* Legend */}
       <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
