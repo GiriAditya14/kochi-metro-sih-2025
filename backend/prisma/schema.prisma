@@ -1,0 +1,372 @@
+// This is your Prisma schema file for KMRL Train Induction Optimization System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Depot {
+  id                Int       @id @default(autoincrement())
+  depotName         String    @unique @map("depot_name") @db.VarChar(100)
+  location          String?   @db.VarChar(200)
+  totalBays         Int       @map("total_bays")
+  bayConfiguration  Json?     @map("bay_configuration")
+  activeTrainsets   Int       @default(0) @map("active_trainsets")
+  maxCapacity       Int       @map("max_capacity")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  
+  trainsets         Trainset[]
+  stablingGeometry  StablingGeometry[]
+  
+  @@map("depots")
+}
+
+model Trainset {
+  id                  Int       @id @default(autoincrement())
+  trainNumber         String    @unique @map("train_number") @db.VarChar(10)
+  carCount            Int       @default(4) @map("car_count")
+  currentStatus       String    @map("current_status") @db.VarChar(20)
+  depotId             Int?      @map("depot_id")
+  stablingPosition    String?   @map("stabling_position") @db.VarChar(50)
+  totalMileage        Decimal   @default(0) @map("total_mileage") @db.Decimal(10, 2)
+  lastMaintenanceDate DateTime? @map("last_maintenance_date") @db.Date
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  depot               Depot?                @relation(fields: [depotId], references: [id])
+  fitnessCertificates FitnessCertificate[]
+  jobCards            JobCard[]
+  brandingContracts   BrandingContract[]
+  mileageTracking     MileageTracking[]
+  cleaningSlots       CleaningSlot[]
+  stablingGeometry    StablingGeometry[]
+  inductionDecisions  InductionDecision[]
+  conflictAlerts      ConflictAlert[]
+  emergencyLogs       EmergencyLog[]
+  withdrawnPlans      EmergencyPlan[] @relation("WithdrawnTrain")
+  replacementPlans    EmergencyPlan[] @relation("ReplacementTrain")
+  routeAssignments    RouteAssignment[]
+  
+  @@index([currentStatus], map: "idx_trainsets_status")
+  @@index([depotId], map: "idx_trainsets_depot")
+  @@map("trainsets")
+}
+
+model FitnessCertificate {
+  id              Int       @id @default(autoincrement())
+  trainId         Int       @map("train_id")
+  department      String    @db.VarChar(50)
+  certificateNumber String? @map("certificate_number") @db.VarChar(100)
+  issuedDate      DateTime  @map("issued_date") @db.Date
+  expiryDate      DateTime  @map("expiry_date") @db.Date
+  validityStatus  String    @map("validity_status") @db.VarChar(20)
+  issuedBy        String?   @map("issued_by") @db.VarChar(100)
+  notes           String?   @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  train           Trainset  @relation(fields: [trainId], references: [id], onDelete: Cascade)
+  
+  @@unique([trainId, department])
+  @@index([trainId], map: "idx_fitness_train")
+  @@index([expiryDate], map: "idx_fitness_expiry")
+  @@index([validityStatus], map: "idx_fitness_status")
+  @@map("fitness_certificates")
+}
+
+model JobCard {
+  id                    Int       @id @default(autoincrement())
+  trainId               Int       @map("train_id")
+  maximoJobNumber       String?   @unique @map("maximo_job_number") @db.VarChar(100)
+  jobType               String    @map("job_type") @db.VarChar(50)
+  priority              String    @db.VarChar(20)
+  status                String    @db.VarChar(20)
+  description           String?   @db.Text
+  assignedTo            String?   @map("assigned_to") @db.VarChar(100)
+  openedDate            DateTime? @map("opened_date")
+  closedDate            DateTime? @map("closed_date")
+  estimatedCompletionDate DateTime? @map("estimated_completion_date")
+  actualCompletionDate  DateTime? @map("actual_completion_date")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  train                 Trainset  @relation(fields: [trainId], references: [id], onDelete: Cascade)
+  
+  @@index([trainId], map: "idx_jobcards_train")
+  @@index([status], map: "idx_jobcards_status")
+  @@index([priority], map: "idx_jobcards_priority")
+  @@map("job_cards")
+}
+
+model BrandingContract {
+  id                  Int       @id @default(autoincrement())
+  trainId             Int       @map("train_id")
+  advertiserName      String    @map("advertiser_name") @db.VarChar(200)
+  contractNumber      String?   @map("contract_number") @db.VarChar(100)
+  startDate           DateTime  @map("start_date") @db.Date
+  endDate             DateTime  @map("end_date") @db.Date
+  requiredExposureHours Decimal @map("required_exposure_hours") @db.Decimal(10, 2)
+  currentExposureHours Decimal  @default(0) @map("current_exposure_hours") @db.Decimal(10, 2)
+  priorityScore       Int       @default(0) @map("priority_score")
+  penaltyAmount       Decimal?  @map("penalty_amount") @db.Decimal(12, 2)
+  status              String    @db.VarChar(20)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  train               Trainset  @relation(fields: [trainId], references: [id], onDelete: Cascade)
+  
+  @@index([trainId], map: "idx_branding_train")
+  @@index([priorityScore(sort: Desc)], map: "idx_branding_priority")
+  @@index([status], map: "idx_branding_status")
+  @@map("branding_contracts")
+}
+
+model MileageTracking {
+  id                Int       @id @default(autoincrement())
+  trainId           Int       @map("train_id")
+  recordedDate      DateTime  @map("recorded_date") @db.Date
+  dailyMileage      Decimal   @default(0) @map("daily_mileage") @db.Decimal(8, 2)
+  cumulativeMileage Decimal  @map("cumulative_mileage") @db.Decimal(10, 2)
+  componentType     String?   @map("component_type") @db.VarChar(50)
+  wearIndicator     Decimal?  @map("wear_indicator") @db.Decimal(5, 2)
+  maintenanceThreshold Decimal? @map("maintenance_threshold") @db.Decimal(10, 2)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  
+  train             Trainset  @relation(fields: [trainId], references: [id], onDelete: Cascade)
+  
+  @@index([trainId], map: "idx_mileage_train")
+  @@index([recordedDate], map: "idx_mileage_date")
+  @@map("mileage_tracking")
+}
+
+model CleaningSlot {
+  id              Int       @id @default(autoincrement())
+  trainId         Int       @map("train_id")
+  slotDate        DateTime  @map("slot_date") @db.Date
+  slotTime        DateTime  @map("slot_time") @db.Time
+  durationMinutes Int       @default(120) @map("duration_minutes")
+  bayNumber       String?   @map("bay_number") @db.VarChar(50)
+  manpowerAssigned Int      @default(0) @map("manpower_assigned")
+  manpowerRequired Int      @default(2) @map("manpower_required")
+  status          String    @db.VarChar(20)
+  cleaningType    String?   @map("cleaning_type") @db.VarChar(50)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  train           Trainset  @relation(fields: [trainId], references: [id], onDelete: Cascade)
+  
+  @@index([trainId], map: "idx_cleaning_train")
+  @@index([slotDate], map: "idx_cleaning_date")
+  @@index([status], map: "idx_cleaning_status")
+  @@map("cleaning_slots")
+}
+
+model StablingGeometry {
+  id                Int       @id @default(autoincrement())
+  trainId           Int       @map("train_id")
+  depotId           Int?      @map("depot_id")
+  bayNumber         String    @map("bay_number") @db.VarChar(50)
+  positionX         Decimal?  @map("position_x") @db.Decimal(8, 2)
+  positionY         Decimal?  @map("position_y") @db.Decimal(8, 2)
+  positionZ         Decimal?  @map("position_z") @db.Decimal(8, 2)
+  shuntingDistance  Decimal?  @map("shunting_distance") @db.Decimal(8, 2)
+  shuntingTimeMinutes Int?    @map("shunting_time_minutes")
+  assignedDate     DateTime  @map("assigned_date") @db.Date
+  isOptimal         Boolean   @default(false) @map("is_optimal")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  
+  train             Trainset  @relation(fields: [trainId], references: [id], onDelete: Cascade)
+  depot             Depot?    @relation(fields: [depotId], references: [id])
+  
+  @@index([trainId], map: "idx_stabling_train")
+  @@index([depotId], map: "idx_stabling_depot")
+  @@map("stabling_geometry")
+}
+
+model InductionDecision {
+  id                Int       @id @default(autoincrement())
+  decisionDate      DateTime  @map("decision_date") @db.Date
+  decisionTime      DateTime  @map("decision_time")
+  decisionType      String    @map("decision_type") @db.VarChar(50)
+  trainId           Int?      @map("train_id")
+  decisionScore     Decimal?  @map("decision_score") @db.Decimal(5, 2)
+  reasoningSummary  String?   @map("reasoning_summary") @db.Text
+  reasoningDetails  Json?     @map("reasoning_details")
+  conflictsDetected Json?     @map("conflicts_detected")
+  createdBy         String?   @map("created_by") @db.VarChar(100)
+  isOverride        Boolean   @default(false) @map("is_override")
+  overrideReason    String?   @map("override_reason") @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+  
+  train             Trainset? @relation(fields: [trainId], references: [id])
+  decisionHistory  DecisionHistory[]
+  learningFeedback  LearningFeedback[]
+  
+  @@index([decisionDate], map: "idx_decisions_date")
+  @@index([trainId], map: "idx_decisions_train")
+  @@index([decisionType], map: "idx_decisions_type")
+  @@map("induction_decisions")
+}
+
+model DecisionHistory {
+  id                Int       @id @default(autoincrement())
+  decisionId       Int       @map("decision_id")
+  trainId          Int?      @map("train_id")
+  outcomeStatus     String?   @map("outcome_status") @db.VarChar(50)
+  punctualityImpact Decimal?  @map("punctuality_impact") @db.Decimal(5, 2)
+  actualMileage     Decimal?  @map("actual_mileage") @db.Decimal(10, 2)
+  issuesEncountered String?   @map("issues_encountered") @db.Text
+  feedbackScore     Int?      @map("feedback_score")
+  feedbackNotes     String?   @map("feedback_notes") @db.Text
+  recordedAt       DateTime  @default(now()) @map("recorded_at")
+  
+  decision         InductionDecision @relation(fields: [decisionId], references: [id])
+  train            Trainset?        @relation(fields: [trainId], references: [id])
+  
+  @@index([decisionId], map: "idx_history_decision")
+  @@index([trainId], map: "idx_history_train")
+  @@map("decision_history")
+}
+
+model ConflictAlert {
+  id                Int       @id @default(autoincrement())
+  trainId           Int       @map("train_id")
+  conflictType      String    @map("conflict_type") @db.VarChar(50)
+  severity          String    @db.VarChar(20)
+  description       String    @db.Text
+  suggestedResolution String? @map("suggested_resolution") @db.Text
+  detectedAt        DateTime  @default(now()) @map("detected_at")
+  resolvedAt        DateTime? @map("resolved_at")
+  status            String    @default("active") @db.VarChar(20)
+  
+  train             Trainset  @relation(fields: [trainId], references: [id])
+  
+  @@index([trainId], map: "idx_conflicts_train")
+  @@index([status], map: "idx_conflicts_status")
+  @@index([severity], map: "idx_conflicts_severity")
+  @@map("conflict_alerts")
+}
+
+model LearningFeedback {
+  id                Int       @id @default(autoincrement())
+  decisionId       Int       @map("decision_id")
+  featureVector     Json?     @map("feature_vector")
+  predictedOutcome  Json?     @map("predicted_outcome")
+  actualOutcome     Json?     @map("actual_outcome")
+  accuracyScore     Decimal?  @map("accuracy_score") @db.Decimal(5, 2)
+  modelVersion      String?   @map("model_version") @db.VarChar(50)
+  feedbackTimestamp DateTime  @default(now()) @map("feedback_timestamp")
+  
+  decision          InductionDecision @relation(fields: [decisionId], references: [id])
+  
+  @@index([decisionId], map: "idx_feedback_decision")
+  @@map("learning_feedback")
+}
+
+// Emergency Handling Models
+model EmergencyLog {
+  id                    Int       @id @default(autoincrement())
+  trainId               Int       @map("train_id")
+  eventType             String    @map("event_type") @db.VarChar(50)
+  timestamp             DateTime  @default(now())
+  location              String?   @db.VarChar(200)
+  faultCode             String?   @map("fault_code") @db.VarChar(100)
+  severity              String    @db.VarChar(20)
+  passengersOnboard     Int?      @map("passengers_onboard")
+  immediateActionRequired String? @map("immediate_action_required") @db.VarChar(100)
+  routeAffected         String?   @map("route_affected") @db.VarChar(50)
+  status                String    @default("active") @db.VarChar(20)
+  resolvedAt            DateTime? @map("resolved_at")
+  resolutionNotes       String?   @map("resolution_notes") @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  train                 Trainset  @relation(fields: [trainId], references: [id])
+  emergencyPlans        EmergencyPlan[]
+  
+  @@index([trainId], map: "idx_emergency_train")
+  @@index([timestamp], map: "idx_emergency_timestamp")
+  @@index([eventType], map: "idx_emergency_event_type")
+  @@index([status], map: "idx_emergency_status")
+  @@map("emergency_logs")
+}
+
+model EmergencyPlan {
+  id                    Int       @id @default(autoincrement())
+  emergencyLogId        Int       @map("emergency_log_id")
+  planType              String    @map("plan_type") @db.VarChar(50)
+  withdrawnTrainId      Int?      @map("withdrawn_train_id")
+  replacementTrainId    Int?      @map("replacement_train_id")
+  deploymentTimeMinutes Int?      @map("deployment_time_minutes")
+  routeAssignment       String?   @map("route_assignment") @db.VarChar(50)
+  confidenceScore       Decimal?  @map("confidence_score") @db.Decimal(5, 2)
+  reasoning             Json?     @db.JsonB
+  executionSteps        Json?     @map("execution_steps") @db.JsonB
+  impactMitigation      Json?     @map("impact_mitigation") @db.JsonB
+  fallbackOptions       Json?     @map("fallback_options") @db.JsonB
+  status                String    @default("pending") @db.VarChar(20)
+  approvedBy            String?   @map("approved_by") @db.VarChar(100)
+  approvedAt            DateTime? @map("approved_at")
+  executedAt            DateTime? @map("executed_at")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  emergencyLog          EmergencyLog @relation(fields: [emergencyLogId], references: [id], onDelete: Cascade)
+  withdrawnTrain        Trainset?    @relation("WithdrawnTrain", fields: [withdrawnTrainId], references: [id])
+  replacementTrain      Trainset?    @relation("ReplacementTrain", fields: [replacementTrainId], references: [id])
+  
+  @@index([emergencyLogId], map: "idx_plan_emergency")
+  @@index([status], map: "idx_plan_status")
+  @@index([planType], map: "idx_plan_type")
+  @@map("emergency_plans")
+}
+
+model CrisisMode {
+  id                    Int       @id @default(autoincrement())
+  crisisId              String    @unique @map("crisis_id") @db.VarChar(100)
+  activatedAt           DateTime  @default(now()) @map("activated_at")
+  deactivatedAt         DateTime? @map("deactivated_at")
+  withdrawalCount       Int       @map("withdrawal_count")
+  affectedRoutes        Json?     @map("affected_routes") @db.JsonB
+  serviceDeficit        Int       @map("service_deficit")
+  actions               Json?     @db.JsonB
+  projectedRecoveryTime DateTime? @map("projected_recovery_time")
+  status                String    @default("active") @db.VarChar(20)
+  managementNotified    Boolean   @default(false) @map("management_notified")
+  publicCommunicated    Boolean   @default(false) @map("public_communicated")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  @@index([status], map: "idx_crisis_status")
+  @@index([activatedAt], map: "idx_crisis_activated")
+  @@map("crisis_modes")
+}
+
+model RouteAssignment {
+  id                    Int       @id @default(autoincrement())
+  trainId               Int       @map("train_id")
+  routeNumber           String    @map("route_number") @db.VarChar(50)
+  assignmentType        String    @map("assignment_type") @db.VarChar(50) // 'revenue', 'standby', 'reassigned'
+  assignedDate          DateTime  @map("assigned_date") @db.Date
+  assignedTime          DateTime? @map("assigned_time")
+  frequencyMinutes      Int?      @map("frequency_minutes")
+  priority              String?   @db.VarChar(20)
+  status                String    @default("active") @db.VarChar(20)
+  endedAt               DateTime? @map("ended_at")
+  notes                 String?   @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  train                 Trainset  @relation(fields: [trainId], references: [id])
+  
+  @@index([trainId], map: "idx_route_train")
+  @@index([routeNumber], map: "idx_route_number")
+  @@index([status], map: "idx_route_status")
+  @@index([assignedDate], map: "idx_route_date")
+  @@map("route_assignments")
+}
+
