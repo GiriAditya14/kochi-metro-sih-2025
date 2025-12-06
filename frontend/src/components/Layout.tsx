@@ -7,7 +7,9 @@ import {
   History,
   Train,
   Menu,
-  X
+  X,
+  Bell,
+  Settings
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -16,10 +18,30 @@ interface LayoutProps {
 }
 
 const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/emergency', label: 'Emergency', icon: AlertTriangle },
-  { path: '/what-if', label: 'What-If', icon: GitBranch },
-  { path: '/history', label: 'History', icon: History },
+  { 
+    path: '/', 
+    label: 'Dashboard', 
+    icon: LayoutDashboard,
+    description: 'Ranked induction list with 6-agent analysis'
+  },
+  { 
+    path: '/emergency', 
+    label: 'Emergency', 
+    icon: AlertTriangle,
+    description: 'Sudden breakdown handling & crisis management'
+  },
+  { 
+    path: '/what-if', 
+    label: 'What-If', 
+    icon: GitBranch,
+    description: 'Scenario simulation & impact analysis'
+  },
+  { 
+    path: '/history', 
+    label: 'History', 
+    icon: History,
+    description: 'Past decisions & outcomes'
+  },
 ];
 
 export default function Layout({ children }: LayoutProps) {
@@ -53,11 +75,22 @@ export default function Layout({ children }: LayoutProps) {
                 </div>
               </div>
             </div>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
-                System Active
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
+                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs font-medium text-green-700 dark:text-green-300">
+                  System Active
+                </span>
+              </div>
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+                <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                  6 AI Agents Running
+                </span>
+              </div>
+              <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 relative">
+                <Bell className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+              </button>
             </div>
           </div>
         </div>
@@ -67,12 +100,17 @@ export default function Layout({ children }: LayoutProps) {
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+            "fixed lg:static inset-y-0 left-0 z-40 w-72 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 shadow-lg lg:shadow-none transform transition-transform duration-300 ease-in-out lg:translate-x-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
           <div className="h-full flex flex-col pt-4 pb-6">
-            <nav className="flex-1 px-3 space-y-1">
+            <nav className="flex-1 px-3 space-y-2">
+              <div className="px-3 py-2 mb-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Navigation
+                </p>
+              </div>
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
@@ -82,14 +120,22 @@ export default function Layout({ children }: LayoutProps) {
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                      "group flex flex-col gap-1 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200",
                       isActive
                         ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                     )}
+                    title={item.description}
                   >
-                    <Icon className={cn("h-5 w-5", isActive && "text-white")} />
-                    {item.label}
+                    <div className="flex items-center gap-3">
+                      <Icon className={cn("h-5 w-5 shrink-0", isActive && "text-white")} />
+                      <span className="font-semibold">{item.label}</span>
+                    </div>
+                    {isActive && (
+                      <p className="text-xs opacity-80 ml-8 leading-tight">
+                        {item.description}
+                      </p>
+                    )}
                   </Link>
                 );
               })}

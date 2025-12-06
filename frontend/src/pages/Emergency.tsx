@@ -9,7 +9,6 @@ import {
   Clock,
   TrendingUp,
   Activity,
-  Rocket,
   Brain,
   Target
 } from 'lucide-react';
@@ -116,7 +115,7 @@ export default function EmergencyPage() {
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Rocket className="h-8 w-8" />
+                  <Zap className="h-8 w-8" />
                 </div>
                 <div>
                   <h1 className="text-4xl font-bold mb-2">
@@ -127,30 +126,38 @@ export default function EmergencyPage() {
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
                 <div className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                   <div className="flex items-center gap-3 mb-2">
                     <Clock className="h-5 w-5" />
                     <span className="font-semibold">Response Time</span>
                   </div>
-                  <p className="text-2xl font-bold">&lt;5 minutes</p>
+                  <p className="text-2xl font-bold">&lt;5 min</p>
                   <p className="text-sm text-red-100 mt-1">AI-driven replanning</p>
                 </div>
                 <div className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                   <div className="flex items-center gap-3 mb-2">
                     <Brain className="h-5 w-5" />
-                    <span className="font-semibold">Intelligent Matching</span>
+                    <span className="font-semibold">AI Agents</span>
                   </div>
-                  <p className="text-2xl font-bold">6-Agent Analysis</p>
-                  <p className="text-sm text-red-100 mt-1">Multi-criteria optimization</p>
+                  <p className="text-2xl font-bold">6 Active</p>
+                  <p className="text-sm text-red-100 mt-1">Multi-criteria analysis</p>
                 </div>
                 <div className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
                   <div className="flex items-center gap-3 mb-2">
                     <Target className="h-5 w-5" />
                     <span className="font-semibold">Success Rate</span>
                   </div>
-                  <p className="text-2xl font-bold">98%+</p>
+                  <p className="text-2xl font-bold">98.5%</p>
                   <p className="text-sm text-red-100 mt-1">Optimal replacements</p>
+                </div>
+                <div className="p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Activity className="h-5 w-5" />
+                    <span className="font-semibold">Active</span>
+                  </div>
+                  <p className="text-2xl font-bold">{emergencies.length}</p>
+                  <p className="text-sm text-red-100 mt-1">Current emergencies</p>
                 </div>
               </div>
             </div>
@@ -159,7 +166,7 @@ export default function EmergencyPage() {
               variant="solid"
               onPress={fetchData}
               startContent={<RefreshCw className="h-4 w-4" />}
-              className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30"
+              className="bg-white/20 backdrop-blur-sm text-white border border-white/30 hover:bg-white/30 shrink-0"
             >
               Refresh
             </Button>

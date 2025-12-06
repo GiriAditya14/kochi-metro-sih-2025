@@ -1,18 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardBody, CardHeader, Spinner, Input, Button, Chip } from '@heroui/react';
-import { RefreshCw, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Wrench } from 'lucide-react';
+import { RefreshCw, Calendar, TrendingUp, AlertCircle, CheckCircle2, Clock, Wrench, Activity, Brain, Zap } from 'lucide-react';
 import { dashboardApi } from '../services/api';
 import type { InductionListResponse, TrainDecision } from '../types';
 import DecisionCard from '../components/DecisionCard';
 import ConflictAlerts from '../components/ConflictAlerts';
 import SixAgentsOverview from '../components/SixAgentsOverview';
-import { formatDate } from '../lib/utils';
+import { formatDate, formatDateTime } from '../lib/utils';
 
 export default function Dashboard() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [data, setData] = useState<InductionListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const fetchInductionList = useCallback(async () => {
     setLoading(true);
@@ -20,6 +21,7 @@ export default function Dashboard() {
     try {
       const response = await dashboardApi.getInductionList(date);
       setData(response.data);
+      setLastUpdate(new Date());
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load induction list');
       console.error('Error fetching induction list:', err);
@@ -69,6 +71,65 @@ export default function Dashboard() {
             Refresh
           </Button>
         </div>
+      </div>
+
+      {/* System Status Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border border-gray-200 dark:border-gray-700">
+          <CardBody className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">System Status</p>
+                <p className="text-lg font-bold text-green-600 dark:text-green-400">Operational</p>
+              </div>
+              <Activity className="h-8 w-8 text-green-500" />
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="border border-gray-200 dark:border-gray-700">
+          <CardBody className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">AI Agents</p>
+                <p className="text-lg font-bold text-blue-600 dark:text-blue-400">6 Active</p>
+              </div>
+              <Brain className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="border border-gray-200 dark:border-gray-700">
+          <CardBody className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Last Update</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white">
+                  {lastUpdate ? formatDateTime(lastUpdate) : 'Never'}
+                </p>
+              </div>
+              <Zap className="h-8 w-8 text-amber-500" />
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="border border-gray-200 dark:border-gray-700">
+          <CardBody className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Data Freshness</p>
+                <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                  {lastUpdate ? (
+                    <span className="flex items-center gap-1">
+                      <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+                      Live
+                    </span>
+                  ) : (
+                    'N/A'
+                  )}
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardBody>
+        </Card>
       </div>
 
       {/* Summary Stats */}
