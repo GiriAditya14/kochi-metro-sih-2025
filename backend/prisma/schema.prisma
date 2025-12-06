@@ -50,6 +50,7 @@ model Trainset {
   withdrawnPlans      EmergencyPlan[] @relation("WithdrawnTrain")
   replacementPlans    EmergencyPlan[] @relation("ReplacementTrain")
   routeAssignments    RouteAssignment[]
+  decisionHistory    DecisionHistory[]
   
   @@index([currentStatus], map: "idx_trainsets_status")
   @@index([depotId], map: "idx_trainsets_depot")
