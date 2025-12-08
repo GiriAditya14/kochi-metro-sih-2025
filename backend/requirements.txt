@@ -1,6 +1,7 @@
 # FastAPI and server
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
+gunicorn==21.2.0
 python-multipart==0.0.6
 
 # Database - PostgreSQL (Neon) & SQLite
@@ -9,12 +10,12 @@ alembic==1.13.1
 psycopg2-binary==2.9.9  # PostgreSQL driver
 
 # Optimization
-ortools==9.8.3296
-numpy==1.26.3
-pandas==2.1.4
+ortools>=9.12.4544
+numpy>=1.26.4,<2.0.0
+pandas>=2.2.0,<3.0.0
 
 # AI Services
-google-generativeai==0.3.2  # Gemini
+google-generativeai>=0.8.0  # Gemini (updated for protobuf 6.x compatibility)
 groq==0.4.2  # Groq LLM
 
 # File Processing
