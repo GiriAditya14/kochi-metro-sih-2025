@@ -1,0 +1,288 @@
+# ===========================================
+# KMRL Train Induction Planning System
+# .gitignore - Exclude unnecessary files
+# ===========================================
+
+# ===========================================
+# Python
+# ===========================================
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# ===========================================
+# Node.js / React / Frontend
+# ===========================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+build/
+.vite/
+*.local
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===========================================
+# Database Files
+# ===========================================
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Database backups
+*.sql
+*.dump
+
+# ===========================================
+# Environment & Configuration
+# ===========================================
+# Environment variables (sensitive)
+.env
+.env.*
+!.env.example
+*.env
+
+# Configuration files with secrets
+config.local.py
+secrets.json
+credentials.json
+
+# ===========================================
+# IDE & Editor Files
+# ===========================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.vim/
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ===========================================
+# OS Files
+# ===========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===========================================
+# Logs & Temporary Files
+# ===========================================
+# Log files
+*.log
+logs/
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# ===========================================
+# Cloudinary & File Uploads
+# ===========================================
+# Uploaded files (if stored locally)
+uploads/
+temp_uploads/
+*.upload
+
+# ===========================================
+# Project Specific
+# ===========================================
+# Mock data exports
+mock_data_export/
+*.csv.export
+*.json.export
+
+# Plan exports
+plan_exports/
+*.plan.json
+
+# Test data
+test_data/
+test_files/
+
+# Documentation builds
+docs/_build/
+site/
+
+# ===========================================
+# AI / ML Models (if any)
+# ===========================================
+*.pkl
+*.pickle
+*.h5
+*.model
+models/*.pth
+models/*.pt
+
+# ===========================================
+# Miscellaneous
+# ===========================================
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Compiled files
+*.class
+*.o
+*.a
+
+# Profiling data
+*.prof
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# ===========================================
+# Keep Important Files
+# ===========================================
+# Keep example env file
+!.env.example
+!.env.template
+
+# Keep README and docs
+!README.md
+!SETUP.md
+!docs/
+
+# Keep requirements
+!requirements.txt
+!package.json
+

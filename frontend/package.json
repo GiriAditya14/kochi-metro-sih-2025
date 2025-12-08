@@ -1,42 +1,32 @@
 {
-  "name": "frontend",
-  "private": true,
-  "version": "0.0.0",
+  "name": "kmrl-induction-planner",
+  "version": "1.0.0",
+  "description": "KMRL Train Induction Planning System - Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@heroui/react": "^2.8.5",
-    "@heroui/theme": "^2.4.23",
-    "autoprefixer": "^10.4.22",
-    "axios": "^1.13.2",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "framer-motion": "^12.23.25",
-    "lucide-react": "^0.556.0",
-    "postcss": "^8.5.6",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.10.1",
-    "tailwind-merge": "^3.4.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.1",
+    "axios": "^1.6.5",
+    "lucide-react": "^0.303.0",
+    "recharts": "^2.10.3",
+    "framer-motion": "^10.17.4",
+    "date-fns": "^3.2.0",
+    "clsx": "^2.1.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^24.10.1",
-    "@types/react": "^19.2.5",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
-    "eslint": "^9.39.1",
-    "eslint-plugin-react-hooks": "^7.0.1",
-    "eslint-plugin-react-refresh": "^0.4.24",
-    "globals": "^16.5.0",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.46.4",
-    "vite": "^7.2.4"
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.0.11"
   }
 }
+
