@@ -1317,6 +1317,67 @@ async def run_combined_simulation(data: Dict[str, Any], db: Session = Depends(ge
     result = await simulator.run_combined_simulation(params)
     return result
 
+@app.post("/api/simulation/advertising")
+async def run_advertising_simulation(data: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Simulate advertising/branding penalty scenarios.
+    Calculates projected penalties and bonuses based on train deployment.
+    """
+    simulator = SimulationService(db)
+    
+    params = {
+        "simulation_days": int(data.get("simulation_days", 7)),
+        "trains_in_service": int(data.get("trains_in_service", 18)),
+        "service_hours_per_day": float(data.get("service_hours_per_day", 16)),
+        "peak_hour_percentage": float(data.get("peak_hour_percentage", 35)),
+        "include_specific_contracts": data.get("include_specific_contracts"),
+        "scenario": data.get("scenario", "normal")
+    }
+    
+    result = await simulator.run_advertising_simulation(params)
+    return result
+
+@app.post("/api/simulation/shunting")
+async def run_shunting_simulation(data: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Simulate depot shunting rearrangement scenarios.
+    Plans optimal move sequences for train positioning.
+    """
+    simulator = SimulationService(db)
+    
+    params = {
+        "target_sequence": data.get("target_sequence", []),
+        "optimize_for": data.get("optimize_for", "balanced"),
+        "available_shunters": int(data.get("available_shunters", 2)),
+        "time_window_minutes": int(data.get("time_window_minutes", 120)),
+        "prioritize_trains": data.get("prioritize_trains", [])
+    }
+    
+    result = await simulator.run_shunting_simulation(params)
+    return result
+
+@app.get("/api/simulation/depot-layout")
+async def get_depot_layout(db: Session = Depends(get_db)):
+    """
+    Get current depot layout and train positions for visualization.
+    """
+    simulator = SimulationService(db)
+    layout = simulator.get_depot_layout()
+    return {"layout": layout, "timestamp": datetime.utcnow().isoformat()}
+
+@app.get("/api/simulation/branding-contracts")
+async def get_active_branding_contracts(db: Session = Depends(get_db)):
+    """
+    Get active branding contracts for simulation selection.
+    """
+    contracts = db.query(BrandingContract).filter(
+        BrandingContract.campaign_end > datetime.utcnow()
+    ).all()
+    return {
+        "contracts": [c.to_dict() for c in contracts],
+        "total": len(contracts)
+    }
+
 # ==================== AI Copilot ====================
 
 @app.post("/api/copilot/chat")
