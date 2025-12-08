@@ -10,14 +10,17 @@ import {
   MessageSquare,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Gauge,
+  Zap
 } from 'lucide-react'
 import AICopilot from './AICopilot'
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/planner', icon: Calendar, label: 'Night Induction Planner' },
-  { path: '/simulator', icon: FlaskConical, label: 'What-If Simulator' },
+  { path: '/what-if', icon: FlaskConical, label: 'What-If Scenarios' },
+  { path: '/simulator', icon: Zap, label: 'Operations Simulator' },
   { path: '/data', icon: Database, label: 'Data Playground' },
   { path: '/alerts', icon: Bell, label: 'Alerts' },
 ]
