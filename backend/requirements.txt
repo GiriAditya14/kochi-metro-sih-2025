@@ -1,38 +1,35 @@
 # FastAPI and server
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-gunicorn==21.2.0
-python-multipart==0.0.6
+fastapi>=0.109.0,<1.0.0
+uvicorn[standard]>=0.27.0,<1.0.0
+gunicorn>=21.2.0,<23.0.0
+python-multipart>=0.0.6,<1.0.0
 
 # Database - PostgreSQL (Neon) & SQLite
-sqlalchemy==2.0.25
-alembic==1.13.1
-psycopg2-binary==2.9.9  # PostgreSQL driver
+sqlalchemy>=2.0.25,<3.0.0
+alembic>=1.13.1,<2.0.0
+psycopg2-binary>=2.9.9,<3.0.0
 
 # Optimization
 ortools>=9.12.4544
-numpy>=1.26.4,<2.0.0
+numpy>=1.26.4
 pandas>=2.2.0,<3.0.0
 
 # AI Services
-google-generativeai>=0.8.0  # Gemini (updated for protobuf 6.x compatibility)
-groq==0.4.2  # Groq LLM
+google-generativeai>=0.8.0
+groq>=0.4.2,<1.0.0
 
 # File Processing
-cloudinary==1.38.0  # File storage
-PyPDF2==3.0.1  # PDF parsing
+cloudinary>=1.38.0,<2.0.0
+PyPDF2>=3.0.1,<4.0.0
 
 # Utilities
-python-dotenv==1.0.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
+python-dotenv>=1.0.0,<2.0.0
+pydantic>=2.9.0,<3.0.0
+pydantic-settings>=2.5.0,<3.0.0
 
 # Date handling
-python-dateutil==2.8.2
-
-# CORS
-starlette==0.35.1
+python-dateutil>=2.8.2,<3.0.0
 
 # HTTP client
-httpx==0.26.0
-aiofiles==23.2.1
+httpx>=0.26.0,<1.0.0
+aiofiles>=23.2.1,<24.0.0
