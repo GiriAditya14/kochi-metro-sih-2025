@@ -11,8 +11,8 @@ psycopg2-binary==2.9.9  # PostgreSQL driver
 
 # Optimization
 ortools>=9.12.4544
-numpy>=1.26.4
-pandas>=2.2.0
+numpy>=1.26.4,<2.0.0
+pandas>=2.2.0,<3.0.0
 
 # AI Services
 google-generativeai==0.3.2  # Gemini
