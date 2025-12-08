@@ -10,7 +10,7 @@ alembic==1.13.1
 psycopg2-binary==2.9.9  # PostgreSQL driver
 
 # Optimization
-ortools==9.8.3296
+ortools>=9.12.4544
 numpy==1.26.3
 pandas==2.1.4
 
