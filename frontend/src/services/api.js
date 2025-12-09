@@ -1,16 +1,51 @@
 import axios from 'axios'
 
-// Use environment variable if available, otherwise use proxy path
-const API_BASE = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL}/api` 
+// API Base URL configuration:
+// - In development: Always use '/api' to leverage Vite proxy
+// - In production: Use VITE_API_URL if set, otherwise use '/api' (relative path)
+const API_BASE = import.meta.env.PROD && import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
   : '/api'
 
 const api = axios.create({
   baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  timeout: 30000 // 30 second timeout
 })
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    if (import.meta.env.DEV) {
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
+    }
+    return config
+  },
+  (error) => {
+    console.error('[API] Request error:', error)
+    return Promise.reject(error)
+  }
+)
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ECONNABORTED') {
+      console.error('[API] Request timeout - backend may be slow or unresponsive')
+    } else if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+      console.error('[API] Network error - backend may not be running or CORS issue')
+      console.error(`[API] Attempted URL: ${error.config?.baseURL}${error.config?.url}`)
+    } else if (error.response) {
+      console.error(`[API] Error ${error.response.status}: ${error.response.statusText}`)
+    } else {
+      console.error('[API] Error:', error.message)
+    }
+    return Promise.reject(error)
+  }
+)
 
 // System
 export const getSystemStatus = () => api.get('/system/status')
