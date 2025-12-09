@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { 
   Bell, 
   AlertTriangle, 
@@ -17,6 +18,7 @@ import {
 import { getAlerts, acknowledgeAlert, resolveAlert } from '../services/api'
 
 function AlertCard({ alert, onAcknowledge, onResolve }) {
+  const { t } = useTranslation()
   const [resolving, setResolving] = useState(false)
   const [resolutionNotes, setResolutionNotes] = useState('')
   const [showResolve, setShowResolve] = useState(false)
@@ -66,12 +68,12 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
       <div className="p-4">
         <div className="flex items-start gap-3">
           <div className={`p-2 rounded-lg ${config.bg}`}>
-            <Icon className={`w-5 h-5 text-${config.color}-400`} />
+            <Icon className={`w-5 h-5 text-${config.color}-600 dark:text-${config.color}-400`} />
           </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-white">{alert.title}</h3>
+              <h3 className="font-medium text-slate-900 dark:text-white">{alert.title}</h3>
               <span className={`badge badge-${
                 alert.severity === 'critical' ? 'danger' :
                 alert.severity === 'warning' ? 'warning' :
@@ -80,20 +82,20 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
                 {alert.severity}
               </span>
               {alert.is_resolved && (
-                <span className="badge badge-success">Resolved</span>
+                <span className="badge badge-success">{t('alerts.resolved')}</span>
               )}
             </div>
             
-            <p className="text-sm text-slate-300 mt-1">{alert.message}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 mt-1">{alert.message}</p>
             
-            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500">
+            <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 dark:text-slate-500">
               {alert.train_id && (
                 <Link 
                   to={`/trains/${alert.train_id}`}
-                  className="flex items-center gap-1 hover:text-blue-400 transition-colors"
+                  className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                 >
                   <Train className="w-3 h-3" />
-                  Train #{alert.train_id}
+                  {t('alerts.train')} #{alert.train_id}
                 </Link>
               )}
               <div className="flex items-center gap-1">
@@ -101,8 +103,8 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
                 {new Date(alert.created_at).toLocaleString()}
               </div>
               {alert.is_acknowledged && (
-                <span className="text-emerald-400">
-                  ✓ Acknowledged by {alert.acknowledged_by}
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  ✓ {t('alerts.acknowledgedBy')} {alert.acknowledged_by}
                 </span>
               )}
             </div>
@@ -114,7 +116,7 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
                 <button
                   onClick={() => onAcknowledge(alert.id)}
                   className="btn btn-ghost text-xs"
-                  title="Acknowledge"
+                  title={t('alerts.acknowledge')}
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -123,19 +125,19 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
                 onClick={() => setShowResolve(!showResolve)}
                 className="btn btn-secondary text-xs"
               >
-                Resolve
+                {t('alerts.resolve')}
               </button>
             </div>
           )}
         </div>
 
         {showResolve && (
-          <div className="mt-4 pt-4 border-t border-slate-800 animate-fade-in">
-            <label className="text-sm text-slate-400 block mb-2">Resolution Notes</label>
+          <div className="mt-4 pt-4 border-t animate-fade-in" style={{ borderColor: 'rgb(var(--color-border))' }}>
+            <label className="text-sm text-slate-600 dark:text-slate-400 block mb-2">{t('alerts.resolutionNotes')}</label>
             <textarea
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
-              placeholder="Describe how this was resolved..."
+              placeholder={t('alerts.describeResolution')}
               className="input w-full h-20 resize-none"
             />
             <div className="flex justify-end gap-2 mt-3">
@@ -143,7 +145,7 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
                 onClick={() => setShowResolve(false)}
                 className="btn btn-ghost text-sm"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button 
                 onClick={handleResolve}
@@ -151,7 +153,7 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
                 className="btn btn-success text-sm"
               >
                 {resolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                Mark Resolved
+                {t('alerts.markResolved')}
               </button>
             </div>
           </div>
@@ -162,6 +164,7 @@ function AlertCard({ alert, onAcknowledge, onResolve }) {
 }
 
 export default function Alerts() {
+  const { t } = useTranslation()
   const [alerts, setAlerts] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('unresolved')
@@ -242,9 +245,9 @@ export default function Alerts() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">Alerts</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Monitor and manage system alerts and notifications
+          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">{t('alerts.title')}</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+            {t('alerts.subtitle')}
           </p>
         </div>
       </div>
@@ -252,40 +255,40 @@ export default function Alerts() {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         <div className="card p-4">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-2">
             <Bell className="w-4 h-4" />
-            <span className="text-xs">Total Alerts</span>
+            <span className="text-xs">{t('alerts.totalAlerts')}</span>
           </div>
-          <p className="text-2xl font-display font-bold text-white">{stats.total}</p>
+          <p className="text-2xl font-display font-bold text-slate-900 dark:text-white">{stats.total}</p>
         </div>
         <div className="card p-4 border-red-500/20">
-          <div className="flex items-center gap-2 text-red-400 mb-2">
+          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 mb-2">
             <AlertCircle className="w-4 h-4" />
-            <span className="text-xs">Critical</span>
+            <span className="text-xs">{t('alerts.critical')}</span>
           </div>
-          <p className="text-2xl font-display font-bold text-red-400">{stats.critical}</p>
+          <p className="text-2xl font-display font-bold text-red-600 dark:text-red-400">{stats.critical}</p>
         </div>
         <div className="card p-4 border-amber-500/20">
-          <div className="flex items-center gap-2 text-amber-400 mb-2">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 mb-2">
             <AlertTriangle className="w-4 h-4" />
-            <span className="text-xs">Warnings</span>
+            <span className="text-xs">{t('alerts.warnings')}</span>
           </div>
-          <p className="text-2xl font-display font-bold text-amber-400">{stats.warning}</p>
+          <p className="text-2xl font-display font-bold text-amber-600 dark:text-amber-400">{stats.warning}</p>
         </div>
         <div className="card p-4">
-          <div className="flex items-center gap-2 text-slate-400 mb-2">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 mb-2">
             <Clock className="w-4 h-4" />
-            <span className="text-xs">Unresolved</span>
+            <span className="text-xs">{t('alerts.unresolved')}</span>
           </div>
-          <p className="text-2xl font-display font-bold text-white">{stats.unresolved}</p>
+          <p className="text-2xl font-display font-bold text-slate-900 dark:text-white">{stats.unresolved}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <span className="text-sm text-slate-400">Status:</span>
+          <Filter className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          <span className="text-sm text-slate-600 dark:text-slate-400">{t('alerts.status')}:</span>
           {['all', 'unresolved', 'resolved'].map(f => (
             <button
               key={f}
@@ -293,16 +296,16 @@ export default function Alerts() {
               className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                 filter === f 
                   ? 'bg-blue-600 text-white' 
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'
               }`}
             >
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+              {t(`alerts.${f}`)}
             </button>
           ))}
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-400">Severity:</span>
+          <span className="text-sm text-slate-600 dark:text-slate-400">{t('alerts.severity')}:</span>
           {['all', 'critical', 'warning', 'info'].map(s => (
             <button
               key={s}
@@ -313,22 +316,22 @@ export default function Alerts() {
                     s === 'warning' ? 'bg-amber-600 text-white' :
                     s === 'info' ? 'bg-blue-600 text-white' :
                     'bg-blue-600 text-white'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'
               }`}
             >
-              {s.charAt(0).toUpperCase() + s.slice(1)}
+              {t(`alerts.${s}`)}
             </button>
           ))}
         </div>
 
         <div className="flex-1 flex justify-end">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search alerts..."
+              placeholder={t('alerts.searchAlerts')}
               className="input pl-10 w-64"
             />
           </div>
@@ -349,13 +352,13 @@ export default function Alerts() {
         ) : (
           <div className="card p-12 text-center">
             <CheckCircle className="w-12 h-12 text-emerald-500/50 mx-auto" />
-            <h3 className="text-lg font-display font-semibold text-white mt-4">
-              No alerts found
+            <h3 className="text-lg font-display font-semibold text-slate-900 dark:text-white mt-4">
+              {t('alerts.noAlertsFound')}
             </h3>
-            <p className="text-slate-400 text-sm mt-2">
+            <p className="text-slate-600 dark:text-slate-400 text-sm mt-2">
               {filter === 'unresolved' 
-                ? 'All alerts have been resolved. Great job!' 
-                : 'No alerts match your current filters.'}
+                ? t('alerts.allResolved')
+                : t('alerts.noMatch')}
             </p>
           </div>
         )}

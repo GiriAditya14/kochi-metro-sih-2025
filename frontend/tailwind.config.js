@@ -4,23 +4,25 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         'kmrl': {
-          'primary': '#1a365d',    // Deep navy - KMRL brand
-          'secondary': '#2c5282',  // Medium blue
-          'accent': '#ed8936',     // Orange accent
-          'success': '#38a169',    // Green for valid/ok
-          'warning': '#d69e2e',    // Yellow for warnings
-          'danger': '#e53e3e',     // Red for errors/critical
-          'light': '#edf2f7',      // Light gray background
-          'dark': '#1a202c',       // Dark text
+          'primary': '#1a365d',
+          'secondary': '#2c5282',
+          'accent': '#ed8936',
+          'success': '#38a169',
+          'warning': '#d69e2e',
+          'danger': '#e53e3e',
+          'light': '#edf2f7',
+          'dark': '#1a202c',
         }
       },
       fontFamily: {
-        'display': ['Outfit', 'system-ui', 'sans-serif'],
-        'body': ['Inter', 'system-ui', 'sans-serif'],
+        'sans': ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        'display': ['Poppins', 'system-ui', 'sans-serif'],
+        'body': ['Poppins', 'system-ui', 'sans-serif'],
         'mono': ['JetBrains Mono', 'monospace']
       },
       animation: {
