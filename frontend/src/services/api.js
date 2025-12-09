@@ -164,13 +164,32 @@ export const runPassengerSimulation = (params) => api.post('/simulation/passenge
 export const runEnergySimulation = (params) => api.post('/simulation/energy', params)
 export const runCombinedSimulation = (params) => api.post('/simulation/combined', params)
 
-// Simple auth (local email/password)
-export const signup = (email, password, role = 'worker') =>
-  api.post('/auth/signup', { email, password, role })
-
-export const login = (email, password) =>
-  api.post('/auth/login', { email, password })
+// Auth - OTP based (phone)
+export const verifyPhoneToken = (idToken, phoneNumber) =>
+  api.post('/auth/verify-token', { id_token: idToken, phone_number: phoneNumber })
 
 export const me = () => api.get('/auth/me')
+
+export const logout = () => api.post('/auth/logout')
+
+// Data Injection
+export const extractDataFromFile = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/data-injection/extract', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
+export const importExtractedData = (dataType, data) =>
+  api.post('/data-injection/import', { data_type: dataType, data })
+
+export const analyzeFile = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/data-injection/analyze', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
 
 export default api

@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Zap,
   LogOut,
-  Shield
+  Shield,
+  Upload
 } from 'lucide-react'
 import AICopilot from './AICopilot'
 import ThemeToggle from './ThemeToggle'
@@ -23,19 +24,24 @@ export default function Layout({ children }) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const { logout } = useAuth()
+  const { logout, user, canAccess, getRoleLabel } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copilotOpen, setCopilotOpen] = useState(false)
 
-  const navItems = [
-    { path: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { path: '/planner', icon: Calendar, label: t('nav.planner') },
-    { path: '/what-if', icon: FlaskConical, label: t('nav.whatif') },
-    { path: '/simulator', icon: Zap, label: t('nav.simulator') },
-    { path: '/resilience', icon: Shield, label: t('nav.resilience') },
-    { path: '/data', icon: Database, label: t('nav.data') },
-    { path: '/alerts', icon: Bell, label: t('nav.alerts') },
+  // Role-based navigation items
+  const allNavItems = [
+    { path: '/', icon: LayoutDashboard, label: t('nav.dashboard'), feature: 'dashboard' },
+    { path: '/planner', icon: Calendar, label: t('nav.planner'), feature: 'inductionPlanner' },
+    { path: '/what-if', icon: FlaskConical, label: t('nav.whatif'), feature: 'whatIfSimulator' },
+    { path: '/simulator', icon: Zap, label: t('nav.simulator'), feature: 'resilienceLab' },
+    { path: '/resilience', icon: Shield, label: t('nav.resilience'), feature: 'resilienceLab' },
+    { path: '/data', icon: Database, label: t('nav.data'), feature: 'dataPlayground' },
+    { path: '/data-injection', icon: Upload, label: 'Data Injection', feature: 'dataInjection' },
+    { path: '/alerts', icon: Bell, label: t('nav.alerts'), feature: 'alerts' },
   ]
+
+  // Filter nav items based on user role
+  const navItems = allNavItems.filter(item => canAccess(item.feature))
 
   return (
     <div className="min-h-screen flex">
@@ -175,18 +181,18 @@ export default function Layout({ children }) {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('app.location')}</div>
+              <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>
+                {user?.name || t('app.location')}
+              </div>
               <div className="text-xs" style={{ color: 'rgb(var(--color-text-tertiary))' }}>
-                {new Date().toLocaleDateString('en-IN', { 
-                  weekday: 'short', 
+                {getRoleLabel()} • {new Date().toLocaleDateString('en-IN', { 
                   day: 'numeric', 
-                  month: 'short',
-                  year: 'numeric'
+                  month: 'short'
                 })}
               </div>
             </div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-medium shadow-lg">
-              OP
+              {user?.name?.charAt(0) || 'U'}
             </div>
           </div>
         </header>

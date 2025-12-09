@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import InductionPlanner from './pages/InductionPlanner'
 import WhatIfSimulator from './pages/WhatIfSimulator'
 import DataPlayground from './pages/DataPlayground'
+import DataInjection from './pages/DataInjection'
 import TrainDetails from './pages/TrainDetails'
 import Alerts from './pages/Alerts'
 import Simulator from './pages/Simulator'
@@ -61,6 +62,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Layout><DataPlayground /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/data-injection"
+        element={
+          <ProtectedRoute>
+            <Layout><DataInjection /></Layout>
           </ProtectedRoute>
         }
       />
