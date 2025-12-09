@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Zap, Users, Gauge, Activity, TrendingDown, AlertTriangle, CheckCircle, Info, Loader2, Brain, Sparkles } from 'lucide-react';
+import { Zap, Users, Gauge, Activity, TrendingDown, AlertTriangle, CheckCircle, Loader2, Brain, Sparkles, DollarSign, Shuffle, Train, Clock, Target, TrendingUp, Building } from 'lucide-react';
 
 const API_BASE = '/api';
 
@@ -203,13 +203,14 @@ const ReasoningDisplay = ({ reasoning, isLoading }) => {
 };
 
 // Stats Card Component
-const StatCard = ({ label, value, unit, icon: Icon, color = 'blue', trend }) => {
+const StatCard = ({ label, value, unit, icon: Icon, color = 'blue', trend, prefix = '' }) => {
   const colorClasses = {
     blue: 'from-blue-500 to-blue-600',
     green: 'from-emerald-500 to-emerald-600',
     amber: 'from-amber-500 to-amber-600',
     red: 'from-red-500 to-red-600',
-    purple: 'from-purple-500 to-purple-600'
+    purple: 'from-purple-500 to-purple-600',
+    orange: 'from-orange-500 to-orange-600'
   };
 
   return (
@@ -225,13 +226,29 @@ const StatCard = ({ label, value, unit, icon: Icon, color = 'blue', trend }) => 
         )}
       </div>
       <div className="mt-2">
-        <div className="text-2xl font-bold text-slate-900 dark:text-white">
-          {typeof value === 'number' ? value.toLocaleString() : value}
-          {unit && <span className="text-sm font-normal text-slate-600 dark:text-slate-400 ml-1">{unit}</span>}
+        <div className="text-2xl font-bold text-white">
+          {prefix}{typeof value === 'number' ? value.toLocaleString() : value}
+          {unit && <span className="text-sm font-normal text-slate-400 ml-1">{unit}</span>}
         </div>
         <div className="text-sm text-slate-600 dark:text-slate-400">{label}</div>
       </div>
     </div>
+  );
+};
+
+// Risk Badge Component
+const RiskBadge = ({ level }) => {
+  const styles = {
+    critical: 'bg-red-500/20 text-red-400 border-red-500/30',
+    high: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    low: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+  };
+  
+  return (
+    <span className={`badge border ${styles[level] || styles.low}`}>
+      {level}
+    </span>
   );
 };
 
@@ -240,6 +257,7 @@ export default function Simulator() {
   const [activeTab, setActiveTab] = useState('passenger');
   const [isLoading, setIsLoading] = useState(false);
   const [stations, setStations] = useState([]);
+  const [brandingContracts, setBrandingContracts] = useState([]);
   const [results, setResults] = useState(null);
 
   // Passenger simulation params
@@ -277,9 +295,27 @@ export default function Simulator() {
     coasting_optimization: false,
     speed_profile: 'normal'
   });
+  
+  // Advertising simulation params
+  const [advertisingParams, setAdvertisingParams] = useState({
+    simulation_days: 7,
+    trains_in_service: 18,
+    service_hours_per_day: 16,
+    peak_hour_percentage: 35,
+    scenario: 'normal'
+  });
+  
+  // Shunting simulation params
+  const [shuntingParams, setShuntingParams] = useState({
+    optimize_for: 'balanced',
+    available_shunters: 2,
+    time_window_minutes: 120,
+    prioritize_trains: []
+  });
 
   useEffect(() => {
     fetchStations();
+    fetchBrandingContracts();
   }, []);
 
   const fetchStations = async () => {
@@ -289,6 +325,16 @@ export default function Simulator() {
       setStations(data.stations || []);
     } catch (error) {
       console.error('Failed to fetch stations:', error);
+    }
+  };
+  
+  const fetchBrandingContracts = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/simulation/branding-contracts`);
+      const data = await res.json();
+      setBrandingContracts(data.contracts || []);
+    } catch (error) {
+      console.error('Failed to fetch branding contracts:', error);
     }
   };
 
@@ -309,13 +355,19 @@ export default function Simulator() {
       } else if (type === 'energy') {
         endpoint = '/simulation/energy';
         params = energyParams;
-      } else {
+      } else if (type === 'combined') {
         endpoint = '/simulation/combined';
         params = {
           ...combinedParams,
           special_event: combinedParams.special_event || null,
           event_station: combinedParams.event_station || null
         };
+      } else if (type === 'advertising') {
+        endpoint = '/simulation/advertising';
+        params = advertisingParams;
+      } else if (type === 'shunting') {
+        endpoint = '/simulation/shunting';
+        params = shuntingParams;
       }
 
       const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -333,16 +385,13 @@ export default function Simulator() {
     setIsLoading(false);
   };
 
-  const getQualityColor = (quality) => {
-    const colors = {
-      'Excellent': 'text-emerald-400',
-      'Good': 'text-blue-400',
-      'Acceptable': 'text-amber-400',
-      'Crowded': 'text-orange-400',
-      'Critical': 'text-red-400'
-    };
-    return colors[quality] || 'text-slate-400';
-  };
+  const tabs = [
+    { id: 'passenger', label: 'Passenger', icon: Users },
+    { id: 'energy', label: 'Energy', icon: Zap },
+    { id: 'advertising', label: 'Advertising', icon: DollarSign },
+    { id: 'shunting', label: 'Shunting', icon: Shuffle },
+    { id: 'combined', label: 'Combined', icon: Activity }
+  ];
 
   return (
     <div className="space-y-6">
@@ -351,7 +400,7 @@ export default function Simulator() {
         <div>
           <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
+              <Gauge className="w-6 h-6 text-white" />
             </div>
             {t('simulator.title')}
           </h1>
@@ -360,21 +409,18 @@ export default function Simulator() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 p-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-xl border border-slate-300/50 dark:border-slate-700/50">
-        {[
-          { id: 'passenger', label: t('simulator.tabs.passenger'), icon: Users },
-          { id: 'energy', label: t('simulator.tabs.energy'), icon: Zap },
-          { id: 'combined', label: t('simulator.tabs.combined'), icon: Activity }
-        ].map(tab => (
+      <div className="flex gap-1 p-1 bg-slate-800/50 rounded-xl border border-slate-700/50 overflow-x-auto">
+        {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => { setActiveTab(tab.id); setResults(null); }}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all ${activeTab === tab.id
+            className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
+              activeTab === tab.id
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-300/50 dark:hover:bg-slate-700/50'
               }`}
           >
-            <tab.icon className="w-5 h-5" />
+            <tab.icon className="w-4 h-4" />
             {tab.label}
           </button>
         ))}
@@ -388,6 +434,8 @@ export default function Simulator() {
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t('simulator.parameters')}</h3>
             </div>
             <div className="card-body space-y-4">
+              
+              {/* Passenger Parameters */}
               {activeTab === 'passenger' && (
                 <>
                   <div>
@@ -490,6 +538,7 @@ export default function Simulator() {
                 </>
               )}
 
+              {/* Energy Parameters */}
               {activeTab === 'energy' && (
                 <>
                   <div>
@@ -589,6 +638,167 @@ export default function Simulator() {
                 </>
               )}
 
+              {/* Advertising Parameters */}
+              {activeTab === 'advertising' && (
+                <>
+                  <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3 mb-4">
+                    <div className="flex items-center gap-2 text-orange-400 text-sm font-medium">
+                      <DollarSign className="w-4 h-4" />
+                      Advertising Penalty Simulator
+                    </div>
+                    <p className="text-slate-400 text-xs mt-1">
+                      Calculate potential penalties/bonuses based on branding contract compliance
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Simulation Period: <span className="text-orange-400">{advertisingParams.simulation_days} days</span>
+                    </label>
+                    <input 
+                      type="range" 
+                      className="w-full accent-orange-500"
+                      min="1" max="30" step="1"
+                      value={advertisingParams.simulation_days}
+                      onChange={(e) => setAdvertisingParams({...advertisingParams, simulation_days: parseInt(e.target.value)})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Trains in Service: <span className="text-orange-400">{advertisingParams.trains_in_service}</span>
+                    </label>
+                    <input 
+                      type="range" 
+                      className="w-full accent-orange-500"
+                      min="10" max="25" step="1"
+                      value={advertisingParams.trains_in_service}
+                      onChange={(e) => setAdvertisingParams({...advertisingParams, trains_in_service: parseInt(e.target.value)})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Service Hours/Day: <span className="text-orange-400">{advertisingParams.service_hours_per_day}h</span>
+                    </label>
+                    <input 
+                      type="range" 
+                      className="w-full accent-orange-500"
+                      min="8" max="20" step="1"
+                      value={advertisingParams.service_hours_per_day}
+                      onChange={(e) => setAdvertisingParams({...advertisingParams, service_hours_per_day: parseInt(e.target.value)})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Peak Hour %: <span className="text-orange-400">{advertisingParams.peak_hour_percentage}%</span>
+                    </label>
+                    <input 
+                      type="range" 
+                      className="w-full accent-orange-500"
+                      min="10" max="60" step="5"
+                      value={advertisingParams.peak_hour_percentage}
+                      onChange={(e) => setAdvertisingParams({...advertisingParams, peak_hour_percentage: parseInt(e.target.value)})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Scenario</label>
+                    <select 
+                      className="input w-full"
+                      value={advertisingParams.scenario}
+                      onChange={(e) => setAdvertisingParams({...advertisingParams, scenario: e.target.value})}
+                    >
+                      <option value="normal">Normal Operations</option>
+                      <option value="reduced_service">Reduced Service (70%)</option>
+                      <option value="festival_boost">Festival Boost (+30%)</option>
+                      <option value="maintenance_disruption">Maintenance Disruption (50%)</option>
+                    </select>
+                  </div>
+
+                  <div className="text-xs text-slate-500 pt-2">
+                    Active contracts: {brandingContracts.length}
+                  </div>
+
+                  <button 
+                    className="btn w-full justify-center mt-4 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white"
+                    onClick={() => runSimulation('advertising')}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <DollarSign className="w-5 h-5" />}
+                    {isLoading ? 'Calculating...' : 'Calculate Penalties'}
+                  </button>
+                </>
+              )}
+
+              {/* Shunting Parameters */}
+              {activeTab === 'shunting' && (
+                <>
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3 mb-4">
+                    <div className="flex items-center gap-2 text-purple-400 text-sm font-medium">
+                      <Shuffle className="w-4 h-4" />
+                      Shunting Rearrangement Simulator
+                    </div>
+                    <p className="text-slate-400 text-xs mt-1">
+                      Optimize train positioning and calculate shunting costs
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Optimization Goal</label>
+                    <select 
+                      className="input w-full"
+                      value={shuntingParams.optimize_for}
+                      onChange={(e) => setShuntingParams({...shuntingParams, optimize_for: e.target.value})}
+                    >
+                      <option value="time">Minimize Time</option>
+                      <option value="energy">Minimize Energy</option>
+                      <option value="balanced">Balanced</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Available Shunters: <span className="text-purple-400">{shuntingParams.available_shunters}</span>
+                    </label>
+                    <input 
+                      type="range" 
+                      className="w-full accent-purple-500"
+                      min="1" max="4" step="1"
+                      value={shuntingParams.available_shunters}
+                      onChange={(e) => setShuntingParams({...shuntingParams, available_shunters: parseInt(e.target.value)})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Time Window: <span className="text-purple-400">{shuntingParams.time_window_minutes} min</span>
+                    </label>
+                    <input 
+                      type="range" 
+                      className="w-full accent-purple-500"
+                      min="60" max="240" step="15"
+                      value={shuntingParams.time_window_minutes}
+                      onChange={(e) => setShuntingParams({...shuntingParams, time_window_minutes: parseInt(e.target.value)})}
+                    />
+                    <div className="flex justify-between text-xs text-slate-500 mt-1">
+                      <span>1 hr</span><span>2 hr</span><span>3 hr</span><span>4 hr</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    className="btn w-full justify-center mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                    onClick={() => runSimulation('shunting')}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shuffle className="w-5 h-5" />}
+                    {isLoading ? 'Planning...' : 'Generate Shunting Plan'}
+                  </button>
+                </>
+              )}
+
+              {/* Combined Parameters */}
               {activeTab === 'combined' && (
                 <>
                   <div className="pb-3 border-b border-slate-300 dark:border-slate-700">
@@ -710,7 +920,7 @@ export default function Simulator() {
           {results && !isLoading && (
             <>
               {/* Passenger Results */}
-              {(results.simulation_type === 'passenger_handling' || results.passenger_results) && (
+              {results.simulation_type === 'passenger_handling' && (
                 <div className="card">
                   <div className="card-header flex items-center gap-3">
                     <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -721,25 +931,24 @@ export default function Simulator() {
                       <StatCard
                         icon={Users}
                         label="Total Passengers"
-                        value={(results.results?.summary || results.passenger_results?.summary)?.total_passengers_served}
+                        value={results.results?.summary?.total_passengers_served}
                         color="blue"
                       />
                       <StatCard
                         icon={Activity}
                         label="Max Load"
-                        value={(results.results?.summary || results.passenger_results?.summary)?.max_load_percent}
+                        value={results.results?.summary?.max_load_percent}
                         unit="%"
-                        color={(results.results?.summary || results.passenger_results?.summary)?.max_load_percent > 100 ? 'red' : 'green'}
+                        color={results.results?.summary?.max_load_percent > 100 ? 'red' : 'green'}
                       />
                       <StatCard
                         icon={Gauge}
                         label="Service Quality"
-                        value={(results.results?.summary || results.passenger_results?.summary)?.service_quality}
+                        value={results.results?.summary?.service_quality}
                         color="purple"
                       />
                     </div>
 
-                    {/* Critical Stations Alert */}
                     {results.results?.critical_stations?.length > 0 && (
                       <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4">
                         <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-semibold mb-3">
@@ -786,7 +995,7 @@ export default function Simulator() {
               )}
 
               {/* Energy Results */}
-              {(results.simulation_type === 'energy_optimization' || results.energy_results) && (
+              {results.simulation_type === 'energy_optimization' && (
                 <div className="card">
                   <div className="card-header flex items-center gap-3">
                     <Zap className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -797,31 +1006,35 @@ export default function Simulator() {
                       <StatCard
                         icon={Zap}
                         label="Total Energy"
-                        value={(results.results?.summary || results.energy_results?.summary)?.total_energy_kwh?.toFixed(0)}
+                        value={results.results?.summary?.total_energy_kwh?.toFixed(0)}
                         unit="kWh"
                         color="amber"
                       />
                       <StatCard
                         icon={Activity}
                         label="Total Cost"
-                        value={`₹${((results.results?.summary || results.energy_results?.summary)?.total_cost_inr / 1000).toFixed(1)}K`}
+                        value={`${(results.results?.summary?.total_cost_inr / 1000).toFixed(1)}K`}
+                        prefix="₹"
                         color="amber"
                       />
                       <StatCard
                         icon={TrendingDown}
                         label="Potential Savings"
-                        value={(results.results?.optimization_potential || results.energy_results?.optimization_potential)?.potential_savings_percent?.toFixed(1)}
+                        value={results.results?.optimization_potential?.potential_savings_percent?.toFixed(1)}
                         unit="%"
                         color="green"
                       />
                       <StatCard
                         icon={Activity}
                         label="CO₂ Footprint"
-                        value={(results.results?.summary || results.energy_results?.summary)?.carbon_footprint_kg?.toFixed(0)}
+                        value={results.results?.summary?.carbon_footprint_kg?.toFixed(0)}
                         unit="kg"
                         color="purple"
                       />
                     </div>
+                  </div>
+                </div>
+              )}
 
                     {/* Energy Breakdown */}
                     <div className="bg-slate-200/50 dark:bg-slate-800/50 rounded-xl p-4">
@@ -841,11 +1054,138 @@ export default function Simulator() {
                               {item.negative ? '-' : ''}{item.value?.toFixed(0)} kWh
                             </div>
                           </div>
-                        ))}
+                          <div className="text-sm text-slate-400">
+                            {results.results?.summary?.is_feasible 
+                              ? `${results.results.summary.time_buffer_minutes} minutes buffer remaining`
+                              : 'Consider adding more shunters or extending time window'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                      <StatCard 
+                        icon={Shuffle}
+                        label="Total Moves"
+                        value={results.results?.summary?.total_moves}
+                        color="purple"
+                      />
+                      <StatCard 
+                        icon={Clock}
+                        label="Time Required"
+                        value={results.results?.summary?.adjusted_time_minutes?.toFixed(0)}
+                        unit="min"
+                        color={results.results?.summary?.is_feasible ? 'green' : 'red'}
+                      />
+                      <StatCard 
+                        icon={Zap}
+                        label="Energy Cost"
+                        value={results.results?.summary?.total_energy_kwh?.toFixed(0)}
+                        unit="kWh"
+                        color="amber"
+                      />
+                      <StatCard 
+                        icon={DollarSign}
+                        label="Shunting Cost"
+                        value={results.results?.summary?.energy_cost_inr?.toFixed(0)}
+                        prefix="₹"
+                        color="orange"
+                      />
+                    </div>
+
+                    {/* Blocking Analysis */}
+                    {results.results?.blocking_analysis?.most_blocked_trains?.length > 0 && (
+                      <div className="bg-slate-800/50 rounded-xl p-4 mb-4">
+                        <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                          <Train className="w-4 h-4 text-purple-400" />
+                          Blocking Analysis
+                        </h4>
+                        <div className="space-y-2">
+                          {results.results.blocking_analysis.most_blocked_trains.slice(0, 5).map((item, i) => (
+                            <div key={i} className="flex items-center justify-between bg-slate-700/50 rounded-lg px-3 py-2">
+                              <div>
+                                <span className="text-white font-medium">{item.target_train}</span>
+                                <span className="text-slate-400 text-sm ml-2">on {item.track}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400 text-sm">Blocked by {item.blocked_by?.length || 0}</span>
+                                <span className="badge badge-warning">{item.moves_required} moves</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Move Sequence Preview */}
+                    {results.results?.move_sequence?.length > 0 && (
+                      <div className="bg-slate-800/50 rounded-xl p-4">
+                        <h4 className="text-white font-semibold mb-3 flex items-center gap-2">
+                          <Activity className="w-4 h-4 text-blue-400" />
+                          Move Sequence (First 10)
+                        </h4>
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {results.results.move_sequence.slice(0, 10).map((move, i) => (
+                            <div key={i} className="flex items-center gap-3 text-sm py-2 border-b border-slate-700/50">
+                              <span className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center flex-shrink-0">
+                                {move.step}
+                              </span>
+                              <div className="flex-1">
+                                <span className="text-white font-medium">{move.train}</span>
+                                <span className="text-slate-400 mx-2">→</span>
+                                <span className="text-slate-300">{move.action.replace(/_/g, ' ')}</span>
+                              </div>
+                              <span className="text-slate-500 text-xs">{move.time_minutes} min</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Combined Results */}
+              {results.simulation_type === 'combined_optimization' && (
+                <>
+                  <div className="card">
+                    <div className="card-header flex items-center gap-3">
+                      <Activity className="w-5 h-5 text-emerald-400" />
+                      <h3 className="text-lg font-semibold text-white">Combined Analysis</h3>
+                    </div>
+                    <div className="card-body">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <StatCard 
+                          icon={Users}
+                          label="Passengers"
+                          value={results.passenger_results?.summary?.total_passengers_served}
+                          color="blue"
+                        />
+                        <StatCard 
+                          icon={Activity}
+                          label="Max Load"
+                          value={results.passenger_results?.summary?.max_load_percent}
+                          unit="%"
+                          color={results.passenger_results?.summary?.max_load_percent > 100 ? 'red' : 'green'}
+                        />
+                        <StatCard 
+                          icon={Zap}
+                          label="Energy"
+                          value={results.energy_results?.summary?.total_energy_kwh?.toFixed(0)}
+                          unit="kWh"
+                          color="amber"
+                        />
+                        <StatCard 
+                          icon={TrendingDown}
+                          label="Savings Potential"
+                          value={results.energy_results?.optimization_potential?.potential_savings_percent?.toFixed(1)}
+                          unit="%"
+                          color="green"
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
 
               {/* AI Reasoning Section */}
