@@ -30,14 +30,15 @@ export const ROLE_PERMISSIONS = {
   inductionPlanner: ['user', 'worker', 'admin'],
   whatIfSimulator: ['worker', 'admin'],
   dataPlayground: ['worker', 'admin'],
-  dataInjection: ['worker', 'admin'],
+  dataInjection: ['user', 'worker', 'admin'],  // All users can upload/analyze
   alerts: ['user', 'worker', 'admin'],
   aiCopilot: ['user', 'worker', 'admin'],
   // Actions
   approvePlan: ['admin'],
   overrideAssignment: ['worker', 'admin'],
   generatePlan: ['worker', 'admin'],
-  uploadData: ['worker', 'admin'],
+  uploadData: ['user', 'worker', 'admin'],  // All users can upload
+  importData: ['worker', 'admin'],  // Only workers/admins can import to DB
   acknowledgeAlert: ['worker', 'admin'],
   resolveAlert: ['admin'],
 };

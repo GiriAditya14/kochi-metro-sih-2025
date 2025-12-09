@@ -1707,6 +1707,187 @@ async def get_override_logs(
     return {"logs": [l.to_dict() for l in logs]}
 
 
+# ==================== Data Injection ====================
+
+@app.post("/api/data-injection/extract")
+async def extract_data_from_file(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Extract data from uploaded file (CSV, PDF, or image).
+    Uses AI to analyze and structure the data.
+    """
+    processor = FileProcessor(db)
+    content = await file.read()
+    filename = file.filename or "unknown"
+    file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
+    
+    # Detect data type from filename or content
+    data_type = "certificates"  # Default
+    filename_lower = filename.lower()
+    if "train" in filename_lower:
+        data_type = "trains"
+    elif "cert" in filename_lower or "fitness" in filename_lower:
+        data_type = "certificates"
+    elif "job" in filename_lower or "work" in filename_lower or "maximo" in filename_lower:
+        data_type = "job-cards"
+    elif "brand" in filename_lower:
+        data_type = "branding"
+    elif "mileage" in filename_lower or "km" in filename_lower:
+        data_type = "mileage"
+    elif "clean" in filename_lower:
+        data_type = "cleaning"
+    
+    try:
+        if file_ext == 'csv':
+            result = await processor.process_csv(content, data_type)
+        elif file_ext == 'pdf':
+            result = await processor.process_pdf(content, data_type)
+        elif file_ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+            # For images, use Groq vision or OCR
+            result = await _process_image(processor, content, data_type)
+        else:
+            # Try as text
+            try:
+                text = content.decode('utf-8')
+                if processor.groq_client:
+                    extracted = await processor._groq_extract_from_text(text, data_type)
+                    result = {"success": True, "records": extracted, "count": len(extracted), "method": "groq_text"}
+                else:
+                    result = {"success": False, "error": "Unsupported file type"}
+            except:
+                result = {"success": False, "error": "Could not parse file"}
+        
+        return {
+            "success": result.get("success", False),
+            "source": file_ext,
+            "filename": filename,
+            "data_type": data_type,
+            "confidence": 0.85 if result.get("success") else 0,
+            "extracted_data": result.get("records", []),
+            "summary": f"Extracted {result.get('count', 0)} {data_type} records using {result.get('method', 'unknown')}",
+            "error": result.get("error")
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "source": file_ext,
+            "filename": filename,
+            "error": str(e)
+        }
+
+
+async def _process_image(processor: FileProcessor, content: bytes, data_type: str) -> Dict:
+    """Process image file - placeholder for OCR/vision AI"""
+    # For now, return a message that image processing requires additional setup
+    # In production, integrate with Google Vision API or Groq vision
+    return {
+        "success": False,
+        "error": "Image processing requires OCR setup. Please upload CSV or PDF instead.",
+        "records": [],
+        "count": 0
+    }
+
+
+@app.post("/api/data-injection/import")
+async def import_extracted_data(
+    data: Dict[str, Any],
+    db: Session = Depends(get_db)
+):
+    """
+    Import previously extracted data into the database.
+    """
+    data_type = data.get("data_type")
+    records = data.get("data", [])
+    
+    if not data_type or not records:
+        raise HTTPException(status_code=400, detail="Missing data_type or data")
+    
+    processor = FileProcessor(db)
+    
+    try:
+        result = await processor._save_to_database(records, data_type)
+        return {
+            "success": True,
+            "message": f"Imported {result.get('saved_count', 0)} records",
+            "saved_count": result.get("saved_count", 0),
+            "error_count": result.get("error_count", 0),
+            "errors": result.get("errors", [])
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/data-injection/analyze")
+async def analyze_uploaded_data(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Analyze uploaded file and provide insights without importing.
+    """
+    processor = FileProcessor(db)
+    content = await file.read()
+    filename = file.filename or "unknown"
+    file_ext = filename.split('.')[-1].lower() if '.' in filename else ''
+    
+    analysis = {
+        "filename": filename,
+        "file_type": file_ext,
+        "file_size": len(content),
+        "insights": [],
+        "warnings": [],
+        "recommendations": []
+    }
+    
+    try:
+        if file_ext == 'csv':
+            text = content.decode('utf-8')
+            reader = csv.DictReader(io.StringIO(text))
+            rows = list(reader)
+            
+            analysis["row_count"] = len(rows)
+            analysis["columns"] = list(rows[0].keys()) if rows else []
+            
+            # Analyze data quality
+            if rows:
+                empty_cells = sum(1 for row in rows for v in row.values() if not v)
+                total_cells = len(rows) * len(rows[0])
+                completeness = ((total_cells - empty_cells) / total_cells * 100) if total_cells > 0 else 0
+                
+                analysis["insights"].append(f"Data completeness: {completeness:.1f}%")
+                analysis["insights"].append(f"Found {len(rows)} records with {len(analysis['columns'])} columns")
+                
+                if completeness < 80:
+                    analysis["warnings"].append("Data has many empty cells - consider cleaning before import")
+                
+                # Detect data type
+                cols_lower = [c.lower() for c in analysis["columns"]]
+                if any("train" in c for c in cols_lower):
+                    analysis["detected_type"] = "trains"
+                elif any("cert" in c or "valid" in c for c in cols_lower):
+                    analysis["detected_type"] = "certificates"
+                elif any("job" in c or "work" in c for c in cols_lower):
+                    analysis["detected_type"] = "job-cards"
+                else:
+                    analysis["detected_type"] = "unknown"
+                    analysis["recommendations"].append("Could not auto-detect data type - please specify manually")
+        
+        elif file_ext == 'pdf':
+            analysis["insights"].append("PDF file detected - will use AI extraction")
+            analysis["recommendations"].append("Ensure PDF contains readable text (not scanned images)")
+        
+        else:
+            analysis["warnings"].append(f"Unsupported file type: {file_ext}")
+        
+        return analysis
+        
+    except Exception as e:
+        analysis["error"] = str(e)
+        return analysis
+
+
 # ==================== Authentication ====================
 
 @app.post("/api/auth/verify-token")
