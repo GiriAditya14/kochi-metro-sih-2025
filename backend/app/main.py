@@ -1729,21 +1729,36 @@ async def verify_phone_token(
     user = db.query(User).filter(User.phone_number == phone_number).first()
     
     if not user:
-        # Create new user - assign role based on phone number for DEV testing
-        # Admin: ends with 0, Worker: ends with 1-5, User: ends with 6-9
-        last_digit = int(phone_number[-1]) if phone_number else 0
-        if last_digit == 0:
-            role = "admin"
-        elif last_digit <= 5:
-            role = "worker"
+        # Predefined users with specific roles
+        PREDEFINED_USERS = {
+            "9165926808": {"role": "admin", "name": "Admin User", "employee_id": "ADMIN001"},
+            "6207451606": {"role": "worker", "name": "Operations Staff", "employee_id": "WORKER001"},
+            "9977433610": {"role": "user", "name": "Viewer User", "employee_id": "USER001"},
+        }
+        
+        # Check if phone is predefined, otherwise assign based on last digit
+        if phone_number in PREDEFINED_USERS:
+            user_config = PREDEFINED_USERS[phone_number]
+            role = user_config["role"]
+            name = user_config["name"]
+            employee_id = user_config["employee_id"]
         else:
-            role = "user"
+            # Fallback: assign role based on last digit
+            last_digit = int(phone_number[-1]) if phone_number else 0
+            if last_digit == 0:
+                role = "admin"
+            elif last_digit <= 5:
+                role = "worker"
+            else:
+                role = "user"
+            name = f"User {phone_number[-4:]}"
+            employee_id = f"EMP{phone_number[-4:]}"
         
         user = User(
             phone_number=phone_number,
-            name=f"User {phone_number[-4:]}",
+            name=name,
             email=f"user{phone_number[-4:]}@kmrl.dev",
-            employee_id=f"EMP{phone_number[-4:]}",
+            employee_id=employee_id,
             department="Operations",
             role=role,
             is_active=True,
