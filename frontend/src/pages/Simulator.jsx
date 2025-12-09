@@ -1032,9 +1032,6 @@ export default function Simulator() {
                         color="purple"
                       />
                     </div>
-                  </div>
-                </div>
-              )}
 
                     {/* Energy Breakdown */}
                     <div className="bg-slate-200/50 dark:bg-slate-800/50 rounded-xl p-4">
@@ -1053,6 +1050,33 @@ export default function Simulator() {
                             <div className={`w-24 text-right text-sm font-medium ${item.negative ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
                               {item.negative ? '-' : ''}{item.value?.toFixed(0)} kWh
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Shunting Results */}
+              {results.simulation_type === 'shunting_rearrangement' && (
+                <div className="card">
+                  <div className="card-header flex items-center gap-3">
+                    <Shuffle className="w-5 h-5 text-purple-400" />
+                    <h3 className="text-lg font-semibold text-white">Shunting Plan Results</h3>
+                  </div>
+                  <div className="card-body">
+                    {/* Feasibility Banner */}
+                    <div className={`rounded-xl p-4 mb-6 ${results.results?.summary?.is_feasible ? 'bg-emerald-500/10 border border-emerald-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                      <div className="flex items-center gap-3">
+                        {results.results?.summary?.is_feasible ? (
+                          <CheckCircle className="w-6 h-6 text-emerald-400" />
+                        ) : (
+                          <AlertTriangle className="w-6 h-6 text-red-400" />
+                        )}
+                        <div>
+                          <div className={`font-semibold ${results.results?.summary?.is_feasible ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {results.results?.summary?.is_feasible ? 'Plan Feasible' : 'Plan Needs Adjustment'}
                           </div>
                           <div className="text-sm text-slate-400">
                             {results.results?.summary?.is_feasible 
