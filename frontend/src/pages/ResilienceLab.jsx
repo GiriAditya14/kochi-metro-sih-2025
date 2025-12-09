@@ -136,8 +136,8 @@ function AgentCard({ agent, isDown, onToggle }) {
         <button
           onClick={onToggle}
           className={`px-3 py-1.5 text-xs rounded-full border transition ${isDown
-              ? 'bg-red-500/20 text-red-600 dark:text-red-200 border-red-500/40'
-              : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-200 border-emerald-500/40'
+            ? 'bg-red-500/20 text-red-600 dark:text-red-200 border-red-500/40'
+            : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-200 border-emerald-500/40'
             }`}
         >
           {isDown ? 'Restore' : 'Simulate Down'}
