@@ -1731,9 +1731,8 @@ async def verify_phone_token(
     if not user:
         # Predefined users with specific roles
         PREDEFINED_USERS = {
-            "9165926808": {"role": "admin", "name": "Admin User", "employee_id": "ADMIN001"},
-            "6207451606": {"role": "worker", "name": "Operations Staff", "employee_id": "WORKER001"},
-            "9977433610": {"role": "user", "name": "Viewer User", "employee_id": "USER001"},
+            "9165926808": {"role": "admin", "name": "Chaitanya", "employee_id": "ADMIN001"},
+            "9977433610": {"role": "user", "name": "Dhruv", "employee_id": "USER001"},
         }
         
         # Check if phone is predefined, otherwise assign based on last digit
