@@ -11,18 +11,31 @@ import {
   MessageSquare,
   ChevronRight,
   Zap,
-  LogOut
+  LogOut,
+  Shield
 } from 'lucide-react'
 import AICopilot from './AICopilot'
 import ThemeToggle from './ThemeToggle'
 import LanguageSelector from './LanguageSelector'
+import { useAuth } from '../contexts/AuthContext'
+import { DepotProvider, useDepot } from '../contexts/DepotContext'
 
-export default function Layout() {
+export default function Layout({ children }) {
+  return (
+    <DepotProvider>
+      <LayoutShell>{children}</LayoutShell>
+    </DepotProvider>
+  )
+}
+
+function LayoutShell({ children }) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { logout } = useAuth()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copilotOpen, setCopilotOpen] = useState(false)
+  const { selectedDepot, setSelectedDepot, depotOptions } = useDepot()
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn')
@@ -34,6 +47,7 @@ export default function Layout() {
     { path: '/planner', icon: Calendar, label: t('nav.planner') },
     { path: '/what-if', icon: FlaskConical, label: t('nav.whatif') },
     { path: '/simulator', icon: Zap, label: t('nav.simulator') },
+    { path: '/resilience', icon: Shield, label: t('nav.resilience') },
     { path: '/data', icon: Database, label: t('nav.data') },
     { path: '/alerts', icon: Bell, label: t('nav.alerts') },
   ]
@@ -44,7 +58,7 @@ export default function Layout() {
       <aside 
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } flex flex-col transition-all duration-300`}
+        } fixed left-0 top-0 h-screen flex flex-col transition-all duration-300 z-40`}
         style={{
           background: 'var(--glass-bg)',
           backdropFilter: 'blur(20px)',
@@ -52,8 +66,8 @@ export default function Layout() {
           borderRight: '1px solid var(--glass-border)'
         }}
       >
-        {/* Logo */}
-        <div className="h-16 flex items-center px-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        {/* Logo - Fixed at top */}
+        <div className="flex-shrink-0 h-16 flex items-center px-4 border-b" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Train className="w-6 h-6 text-white" />
@@ -80,8 +94,8 @@ export default function Layout() {
           <ChevronRight className={`w-4 h-4 transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
         </button>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        {/* Navigation - Scrollable middle section */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
           {navItems.map(({ path, icon: Icon, label }) => (
             <Link
               key={path}
@@ -94,8 +108,8 @@ export default function Layout() {
           ))}
         </nav>
 
-        {/* AI Copilot Toggle */}
-        <div className="p-4 border-t" style={{ borderColor: 'rgb(var(--color-border))' }}>
+        {/* AI Copilot Toggle - Fixed at bottom */}
+        <div className="flex-shrink-0 p-4 border-t" style={{ borderColor: 'rgb(var(--color-border))' }}>
           <button
             onClick={() => setCopilotOpen(!copilotOpen)}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
@@ -118,16 +132,16 @@ export default function Layout() {
           </button>
         </div>
 
-        {/* Version */}
+        {/* Version - Fixed at bottom */}
         {sidebarOpen && (
-          <div className="p-4 text-center">
+          <div className="flex-shrink-0 p-4 text-center">
             <div className="text-xs" style={{ color: 'rgb(var(--color-text-tertiary))' }}>{t('app.version')}</div>
           </div>
         )}
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className={`flex-1 flex flex-col min-h-screen ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
         {/* Header */}
         <header 
           className="h-16 border-b flex items-center justify-between px-6"
@@ -146,15 +160,48 @@ export default function Layout() {
           </div>
           
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Depot</span>
+              <select
+                value={selectedDepot}
+                onChange={(e) => setSelectedDepot(e.target.value)}
+                className="input h-9"
+              >
+                <option value="ALL">All</option>
+                {depotOptions.map(dep => (
+                  <option key={dep} value={dep}>{dep}</option>
+                ))}
+              </select>
+            </div>
             <LanguageSelector />
             <ThemeToggle />
-            <button
-              onClick={handleLogout}
-              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <div className="relative group">
+              <button
+                onClick={() => {
+                  logout()
+                  navigate('/login')
+                }}
+                className="p-2 rounded-full border transition hover:bg-slate-200 dark:hover:bg-slate-800"
+                style={{
+                  background: 'var(--glass-bg)',
+                  borderColor: 'rgb(var(--color-border))',
+                  color: 'rgb(var(--color-text-primary))'
+                }}
+                aria-label="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+              <div
+                className="absolute right-0 mt-2 px-2 py-1 rounded text-xs shadow-lg transition-opacity opacity-0 group-hover:opacity-100 z-50"
+                style={{
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'rgb(var(--color-text-primary))'
+                }}
+              >
+                Logout
+              </div>
+            </div>
             <div className="text-right">
               <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('app.location')}</div>
               <div className="text-xs" style={{ color: 'rgb(var(--color-text-tertiary))' }}>

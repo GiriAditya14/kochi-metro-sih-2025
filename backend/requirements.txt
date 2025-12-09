@@ -33,3 +33,6 @@ python-dateutil>=2.8.2,<3.0.0
 # HTTP client
 httpx>=0.26.0,<1.0.0
 aiofiles>=23.2.1,<24.0.0
+
+# Auth (local)
+python-dotenv>=1.0.0,<2.0.0
