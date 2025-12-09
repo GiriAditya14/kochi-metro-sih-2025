@@ -69,7 +69,7 @@ def init_db():
             Train, FitnessCertificate, JobCard,
             BrandingContract, MileageMeter, CleaningRecord,
             DepotTrack, TrainPosition, NightPlan, PlanAssignment,
-            Alert, OverrideLog, CleaningBay
+            Alert, OverrideLog, CleaningBay, User
         )
         
         # Create tables
