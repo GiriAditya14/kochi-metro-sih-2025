@@ -1,114 +1,91 @@
 import { useState } from 'react'
-import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import { Train, Lock, User } from 'lucide-react'
 
 export default function Login() {
-  const { login, signup } = useAuth()
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('worker')
-  const [isSignup, setIsSignup] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
-  const submit = async (e) => {
+  const handleLogin = (e) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      if (isSignup) {
-        await signup(email, password, role)
-      } else {
-        await login(email, password)
-      }
-      navigate('/')
-    } catch (err) {
-      setError(err?.response?.data?.detail || err.message || 'Failed')
-    } finally {
-      setLoading(false)
-    }
+    // Store login state
+    localStorage.setItem('isLoggedIn', 'true')
+    // Navigate to animation transition
+    navigate('/transition')
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg-primary)' }}>
-      <div className="w-full max-w-md rounded-lg p-6 shadow-lg" style={{ 
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid var(--glass-border)'
-      }}>
-        <h1 className="text-2xl font-bold mb-4" style={{ color: 'rgb(var(--color-text-primary))' }}>
-          {isSignup ? 'Sign Up' : 'Login'}
-        </h1>
-        {error && <div className="mb-3 text-red-600 text-sm">{error}</div>}
-        <form onSubmit={submit} className="space-y-3">
-          <div>
-            <label className="block text-sm mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Email</label>
-            <input 
-              className="w-full rounded px-3 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-              style={{
-                background: 'rgba(var(--color-bg-secondary), 0.5)',
-                border: '1px solid rgb(var(--color-border))',
-                color: 'rgb(var(--color-text-primary))'
-              }}
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-            />
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/Metro%20Paris%20Pigalle.jpeg')" }}
+      />
+      
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 bg-black/50" />
+      
+      <div className="max-w-md w-full p-8 relative z-10 rounded-2xl backdrop-blur-xl bg-white/10 border border-white/20 shadow-2xl">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 mb-4 shadow-lg">
+            <Train className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-3xl font-display font-bold text-white drop-shadow-lg">
+            Metro Operations
+          </h1>
+          <p className="text-white/90 mt-2 drop-shadow">
+            Sign in to access your dashboard
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Password</label>
-            <input 
-              className="w-full rounded px-3 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
-              type="password"
-              style={{
-                background: 'rgba(var(--color-bg-secondary), 0.5)',
-                border: '1px solid rgb(var(--color-border))',
-                color: 'rgb(var(--color-text-primary))'
-              }}
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-            />
-          </div>
-          {isSignup && (
-            <div>
-              <label className="block text-sm mb-1" style={{ color: 'rgb(var(--color-text-secondary))' }}>Role</label>
-              <select 
-                className="w-full rounded px-3 py-2 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                style={{
-                  background: 'rgba(var(--color-bg-secondary), 0.5)',
-                  border: '1px solid rgb(var(--color-border))',
-                  color: 'rgb(var(--color-text-primary))'
-                }}
-                value={role} 
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="worker">Worker</option>
-                <option value="supervisor">Supervisor</option>
-                <option value="admin">Admin</option>
-              </select>
+            <label className="block text-sm font-medium text-white/90 mb-2">
+              Username
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-white/30 rounded-lg bg-white/20 backdrop-blur-sm text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                placeholder="Enter your username"
+                required
+              />
             </div>
-          )}
-          <button 
-            type="submit" 
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-            disabled={loading}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white/90 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-white/30 rounded-lg bg-white/20 backdrop-blur-sm text-white placeholder-white/50 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full btn btn-primary py-3 text-lg font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg shadow-lg transition-all"
           >
-            {loading ? 'Please wait...' : isSignup ? 'Sign Up' : 'Login'}
+            Sign In
           </button>
         </form>
-        <div className="mt-4 text-sm text-center">
-          <button 
-            className="text-blue-600 hover:text-blue-700 transition-colors" 
-            onClick={() => { setIsSignup(!isSignup); setError('') }}
-          >
-            {isSignup ? 'Have an account? Login' : 'Need an account? Sign up'}
-          </button>
-        </div>
+
+        <p className="text-center text-sm text-white/70 mt-6">
+          Kochi Metro Rail Operations System
+        </p>
       </div>
     </div>
   )
 }
-

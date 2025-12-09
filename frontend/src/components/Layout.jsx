@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { 
   LayoutDashboard, 
@@ -37,8 +37,13 @@ function LayoutShell({ children }) {
   const [copilotOpen, setCopilotOpen] = useState(false)
   const { selectedDepot, setSelectedDepot, depotOptions } = useDepot()
 
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn')
+    navigate('/login')
+  }
+
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { path: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
     { path: '/planner', icon: Calendar, label: t('nav.planner') },
     { path: '/what-if', icon: FlaskConical, label: t('nav.whatif') },
     { path: '/simulator', icon: Zap, label: t('nav.simulator') },
@@ -216,7 +221,7 @@ function LayoutShell({ children }) {
 
         {/* Page content */}
         <main className="flex-1 p-6 overflow-auto">
-          {children}
+          <Outlet />
         </main>
       </div>
 
