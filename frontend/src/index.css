@@ -2,6 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS Variables for Theme */
+:root {
+  /* Light Mode Colors */
+  --color-bg-primary: 255, 255, 255;
+  --color-bg-secondary: 248, 250, 252;
+  --color-bg-tertiary: 241, 245, 249;
+  --color-text-primary: 15, 23, 42;
+  --color-text-secondary: 51, 65, 85;
+  --color-text-tertiary: 100, 116, 139;
+  --color-border: 226, 232, 240;
+  --color-border-hover: 203, 213, 225;
+  
+  /* Glass Effect Light - Enhanced visibility */
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg-strong: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(203, 213, 225, 0.6);
+  --glass-shadow: rgba(15, 23, 42, 0.08);
+  
+  /* Accent Colors */
+  --color-primary: 59, 130, 246;
+  --color-success: 16, 185, 129;
+  --color-warning: 245, 158, 11;
+  --color-danger: 239, 68, 68;
+  --color-purple: 168, 85, 247;
+}
+
+.dark {
+  /* Dark Mode Colors */
+  --color-bg-primary: 2, 6, 23;
+  --color-bg-secondary: 15, 23, 42;
+  --color-bg-tertiary: 30, 41, 59;
+  --color-text-primary: 248, 250, 252;
+  --color-text-secondary: 226, 232, 240;
+  --color-text-tertiary: 148, 163, 184;
+  --color-border: 51, 65, 85;
+  --color-border-hover: 71, 85, 105;
+  
+  /* Glass Effect Dark */
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-bg-strong: rgba(15, 23, 42, 0.9);
+  --glass-border: rgba(148, 163, 184, 0.15);
+  --glass-shadow: rgba(0, 0, 0, 0.4);
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -9,96 +53,184 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a202c;
+  @apply bg-slate-200 dark:bg-slate-800;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4a5568;
-  border-radius: 4px;
+  @apply bg-slate-400 dark:bg-slate-600 rounded;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #718096;
+  @apply bg-slate-500 dark:bg-slate-500;
 }
 
 /* Base styles */
 body {
-  @apply bg-slate-950 text-slate-100 font-body;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.1) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(234, 88, 12, 0.05) 0px, transparent 50%);
-  background-attachment: fixed;
+  @apply font-body transition-colors duration-300;
+  position: relative;
+  min-height: 100vh;
+  background: rgb(var(--color-bg-secondary));
+  color: rgb(var(--color-text-primary));
 }
 
-/* Custom component classes */
+/* Background gradient layer - behind everything */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Light mode gradient background */
+body:not(.dark)::before {
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+}
+
+/* Dark mode gradient background */
+.dark body::before {
+  background: 
+    radial-gradient(circle at 20% 20%, rgba(30, 58, 138, 0.2) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(88, 28, 135, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 50% 80%, rgba(234, 88, 12, 0.08) 0%, transparent 50%);
+}
+
+/* Main content layer - above background */
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Glassmorphism Component Classes */
 @layer components {
+  /* Glass Card */
   .card {
-    @apply bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-xl;
+    position: relative;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    @apply border rounded-xl shadow-lg transition-all duration-300;
+    border-color: var(--glass-border);
+    box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    z-index: 10;
+  }
+  
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, 
+      rgba(var(--color-primary), 0.1) 0%, 
+      transparent 50%, 
+      rgba(var(--color-purple), 0.05) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  .card:hover {
+    @apply transform -translate-y-0.5;
+    box-shadow: 0 12px 40px 0 var(--glass-shadow);
+    border-color: rgba(var(--color-primary), 0.3);
   }
   
   .card-header {
-    @apply px-6 py-4 border-b border-slate-800;
+    @apply px-6 py-4 border-b;
+    border-color: rgb(var(--color-border));
   }
   
   .card-body {
     @apply p-6;
   }
   
+  /* Glass Buttons */
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   
   .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white;
+    @apply bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/30;
   }
   
   .btn-secondary {
-    @apply bg-slate-700 hover:bg-slate-600 text-white;
+    background: rgba(var(--color-bg-tertiary), 0.8);
+    @apply hover:bg-slate-300 dark:hover:bg-slate-700 border;
+    border-color: rgb(var(--color-border));
+    color: rgb(var(--color-text-primary));
   }
   
   .btn-success {
-    @apply bg-emerald-600 hover:bg-emerald-700 text-white;
+    @apply bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30;
   }
   
   .btn-warning {
-    @apply bg-amber-600 hover:bg-amber-700 text-white;
+    @apply bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/30;
   }
   
   .btn-danger {
-    @apply bg-red-600 hover:bg-red-700 text-white;
+    @apply bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30;
   }
   
   .btn-ghost {
-    @apply bg-transparent hover:bg-slate-800 text-slate-300;
+    background: transparent;
+    @apply hover:bg-slate-200 dark:hover:bg-slate-800;
+    color: rgb(var(--color-text-secondary));
   }
   
+  /* Glass Input */
   .input {
-    @apply bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-slate-100 
-           placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 
-           focus:border-transparent transition-all;
+    background: rgba(var(--color-bg-tertiary), 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    @apply border rounded-lg px-4 py-2 transition-all;
+    border-color: rgb(var(--color-border));
+    color: rgb(var(--color-text-primary));
   }
   
+  .input::placeholder {
+    color: rgb(var(--color-text-tertiary));
+  }
+  
+  .input:focus {
+    @apply outline-none ring-2 ring-blue-500 border-transparent;
+  }
+  
+  /* Badges */
   .badge {
-    @apply px-2 py-0.5 rounded-full text-xs font-medium;
+    @apply px-2 py-0.5 rounded-full text-xs font-medium border;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   
   .badge-success {
-    @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+    @apply bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30;
   }
   
   .badge-warning {
-    @apply bg-amber-500/20 text-amber-400 border border-amber-500/30;
+    @apply bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30;
   }
   
   .badge-danger {
-    @apply bg-red-500/20 text-red-400 border border-red-500/30;
+    @apply bg-red-500/20 text-red-600 dark:text-red-400 border-red-500/30;
   }
   
   .badge-info {
-    @apply bg-blue-500/20 text-blue-400 border border-blue-500/30;
+    @apply bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-500/30;
   }
   
+  /* Status Dots */
   .status-dot {
     @apply w-2 h-2 rounded-full;
   }
@@ -115,17 +247,30 @@ body {
     @apply bg-red-500 shadow-lg shadow-red-500/50;
   }
   
+  /* Table Row */
   .table-row {
-    @apply border-b border-slate-800 hover:bg-slate-800/50 transition-colors;
+    @apply border-b transition-colors;
+    border-color: rgb(var(--color-border));
   }
   
+  .table-row:hover {
+    background: rgba(var(--color-bg-tertiary), 0.5);
+  }
+  
+  /* Sidebar Link */
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 
-           hover:text-white hover:bg-slate-800/50 transition-all;
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all;
+    color: rgb(var(--color-text-tertiary));
+  }
+  
+  .sidebar-link:hover {
+    color: rgb(var(--color-text-primary));
+    background: rgba(var(--color-bg-tertiary), 0.5);
   }
   
   .sidebar-link.active {
-    @apply text-white bg-blue-600/20 border-l-2 border-blue-500;
+    color: rgb(var(--color-text-primary));
+    @apply bg-blue-600/20 border-l-2 border-blue-500;
   }
 }
 
@@ -178,7 +323,9 @@ body {
 
 /* Depot visualization */
 .depot-track {
-  @apply bg-slate-800/50 border border-slate-700 rounded-lg p-2;
+  @apply border rounded-lg p-2;
+  background: rgba(var(--color-bg-tertiary), 0.5);
+  border-color: rgb(var(--color-border));
 }
 
 .depot-train {
@@ -189,7 +336,8 @@ body {
 
 /* Score indicators */
 .score-bar {
-  @apply h-2 rounded-full bg-slate-700 overflow-hidden;
+  @apply h-2 rounded-full overflow-hidden;
+  background: rgba(var(--color-bg-tertiary), 0.8);
 }
 
 .score-fill {
