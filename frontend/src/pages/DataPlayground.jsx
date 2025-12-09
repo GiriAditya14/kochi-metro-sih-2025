@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Database,
@@ -28,6 +28,7 @@ import {
   generateMockData
 } from '../services/api'
 import api from '../services/api'
+import { useDepot } from '../contexts/DepotContext'
 
 const getTabs = (t) => [
   { id: 'trains', label: t('dataPlayground.trains'), icon: Train },
@@ -994,6 +995,7 @@ export default function DataPlayground() {
   const [success, setSuccess] = useState(null)
   const [modalOpen, setModalOpen] = useState(null) // 'add' | 'csv' | null
   const [csvUploadType, setCsvUploadType] = useState(null)
+  const { selectedDepot, updateFromTrains } = useDepot()
 
   const fetchData = async () => {
     setLoading(true)
@@ -1015,6 +1017,7 @@ export default function DataPlayground() {
         mileage: mileage.data.mileage_data || [],
         cleaning: cleaning.data.cleaning_records || []
       })
+      updateFromTrains(trains.data.trains || [])
     } catch (err) {
       console.error('Failed to fetch data:', err)
     } finally {
@@ -1025,6 +1028,26 @@ export default function DataPlayground() {
   useEffect(() => {
     fetchData()
   }, [])
+
+  const trainFilter = useMemo(() => {
+    const ids = new Set()
+    const codes = new Set()
+    ;(data.trains || []).forEach(t => {
+      const matchesDepot = selectedDepot === 'ALL' || t.depot_id === selectedDepot
+      if (matchesDepot) {
+        if (t.id) ids.add(t.id)
+        if (t.train_id) codes.add(t.train_id)
+      }
+    })
+    return { ids, codes }
+  }, [data.trains, selectedDepot])
+
+  const filterDataByDepot = (rows, tabId) => {
+    const list = rows || []
+    if (selectedDepot === 'ALL') return list
+    if (tabId === 'trains') return list.filter(t => t.depot_id === selectedDepot)
+    return list.filter(item => trainFilter.ids.has(item.train_id) || trainFilter.codes.has(item.train_id))
+  }
 
   const handleGenerateMock = async () => {
     setGenerating(true)
@@ -1153,18 +1176,18 @@ export default function DataPlayground() {
     }
   }
 
-  const getData = () => data[activeTab] || []
+  const getData = (tabId = activeTab) => filterDataByDepot(data[tabId] || [], tabId)
 
   const renderForm = () => {
     switch (activeTab) {
       case 'trains':
-        return <TrainForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={data.trains || []} />
+        return <TrainForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={getData('trains')} />
       case 'certificates':
-        return <CertificateForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={data.trains || []} />
+        return <CertificateForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={getData('trains')} />
       case 'jobs':
-        return <JobCardForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={data.trains || []} />
+        return <JobCardForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={getData('trains')} />
       case 'branding':
-        return <BrandingForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={data.trains || []} />
+        return <BrandingForm onSubmit={fetchData} onClose={() => setModalOpen(null)} trains={getData('trains')} />
       default:
         return <p className="text-slate-600 dark:text-slate-400">Form not available for this data type.</p>
     }
@@ -1181,7 +1204,7 @@ export default function DataPlayground() {
   return (
     <div className="space-y-6 animate-in">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">{t('dataPlayground.title')}</h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -1216,7 +1239,7 @@ export default function DataPlayground() {
       <div className="grid grid-cols-6 gap-4">
         {tabs.map(tab => {
           const Icon = tab.icon
-          const count = data[tab.id]?.length || 0
+          const count = getData(tab.id).length
           return (
             <button
               key={tab.id}

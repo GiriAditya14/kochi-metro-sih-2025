@@ -18,14 +18,24 @@ import AICopilot from './AICopilot'
 import ThemeToggle from './ThemeToggle'
 import LanguageSelector from './LanguageSelector'
 import { useAuth } from '../contexts/AuthContext'
+import { DepotProvider, useDepot } from '../contexts/DepotContext'
 
 export default function Layout({ children }) {
+  return (
+    <DepotProvider>
+      <LayoutShell>{children}</LayoutShell>
+    </DepotProvider>
+  )
+}
+
+function LayoutShell({ children }) {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
   const { logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copilotOpen, setCopilotOpen] = useState(false)
+  const { selectedDepot, setSelectedDepot, depotOptions } = useDepot()
 
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
@@ -145,6 +155,19 @@ export default function Layout({ children }) {
           </div>
           
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>Depot</span>
+              <select
+                value={selectedDepot}
+                onChange={(e) => setSelectedDepot(e.target.value)}
+                className="input h-9"
+              >
+                <option value="ALL">All</option>
+                {depotOptions.map(dep => (
+                  <option key={dep} value={dep}>{dep}</option>
+                ))}
+              </select>
+            </div>
             <LanguageSelector />
             <ThemeToggle />
             <div className="relative group">
