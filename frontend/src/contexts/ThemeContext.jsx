@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createAnimation } from '../utils/themeAnimations'
 
 const ThemeContext = createContext()
 
@@ -16,6 +17,13 @@ export function ThemeProvider({ children }) {
     return 'light'
   })
 
+  const [animationConfig, setAnimationConfig] = useState({
+    variant: 'circle',
+    start: 'center',
+    blur: false,
+    gifUrl: ''
+  })
+
   useEffect(() => {
     const root = window.document.documentElement
     
@@ -29,12 +37,51 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('theme', theme)
   }, [theme])
 
+  const updateAnimationStyles = useCallback((css, name) => {
+    if (typeof window === 'undefined') return
+
+    let styleElement = document.getElementById('theme-transition-styles')
+
+    if (!styleElement) {
+      styleElement = document.createElement('style')
+      styleElement.id = 'theme-transition-styles'
+      document.head.appendChild(styleElement)
+    }
+
+    styleElement.textContent = css
+  }, [])
+
   const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
+    const animation = createAnimation(
+      animationConfig.variant,
+      animationConfig.start,
+      animationConfig.blur,
+      animationConfig.gifUrl
+    )
+
+    updateAnimationStyles(animation.css, animation.name)
+
+    if (typeof window === 'undefined') return
+
+    const switchTheme = () => {
+      setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light')
+    }
+
+    if (!document.startViewTransition) {
+      switchTheme()
+      return
+    }
+
+    document.startViewTransition(switchTheme)
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ 
+      theme, 
+      toggleTheme,
+      animationConfig,
+      setAnimationConfig
+    }}>
       {children}
     </ThemeContext.Provider>
   )

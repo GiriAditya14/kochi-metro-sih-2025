@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "KMRL Induction Planner",
+    "slug": "kmrl-induction-planner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
+    "ios": {
+      "supportsTabletMode": true,
+      "bundleIdentifier": "com.kmrl.inductionplanner"
+    },
+    "android": {
+      "package": "com.sih.hasteai",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#0f172a"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "web": {},
+    "extra": {
+      "eas": {
+        "projectId": "cbdf01ef-ddef-445b-8c04-8caa697c54a7"
+      },
+      "firebaseApiKey": "AIzaSyA-69HOC9ByfiSwwlPrcFxCI5mak2l0Dak",
+      "firebaseProjectId": "kochi-metro-54b1f"
+    }
+  }
+}

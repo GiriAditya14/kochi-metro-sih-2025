@@ -1,0 +1,14 @@
+# Ignore existing android folder to use managed workflow
+android/
+ios/
+
+# Ignore build artifacts
+*.apk
+*.aab
+*.ipa
+
+# Ignore local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

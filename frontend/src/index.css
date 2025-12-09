@@ -26,6 +26,10 @@
   --color-warning: 245, 158, 11;
   --color-danger: 239, 68, 68;
   --color-purple: 168, 85, 247;
+  
+  /* Animation Timing Functions */
+  --expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --expo-in: cubic-bezier(0.7, 0, 0.84, 0);
 }
 
 .dark {

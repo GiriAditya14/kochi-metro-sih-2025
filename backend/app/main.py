@@ -1659,6 +1659,84 @@ async def get_override_logs(
     return {"logs": [l.to_dict() for l in logs]}
 
 
+# ==================== Authentication ====================
+
+# In-memory user store for dev mode (replace with database in production)
+_dev_users = {}
+
+@app.post("/api/auth/verify-token")
+async def verify_token(
+    data: Dict[str, Any],
+    db: Session = Depends(get_db)
+):
+    """
+    Verify token and return/create user.
+    DEV MODE: Accepts any token and creates user if not exists.
+    PRODUCTION: Should verify Firebase ID token.
+    """
+    id_token = data.get("id_token")
+    phone_number = data.get("phone_number", "").replace("+91", "")
+    
+    if not id_token or not phone_number:
+        raise HTTPException(status_code=400, detail="Missing id_token or phone_number")
+    
+    # DEV MODE: Create or get user from memory
+    if phone_number not in _dev_users:
+        # Assign role based on phone number for testing
+        # Admin: ends with 0, Worker: ends with 1-5, User: ends with 6-9
+        last_digit = int(phone_number[-1]) if phone_number else 0
+        if last_digit == 0:
+            role = "admin"
+        elif last_digit <= 5:
+            role = "worker"
+        else:
+            role = "user"
+        
+        _dev_users[phone_number] = {
+            "id": len(_dev_users) + 1,
+            "phone_number": phone_number,
+            "name": f"User {phone_number[-4:]}",
+            "email": f"user{phone_number[-4:]}@kmrl.dev",
+            "employee_id": f"EMP{phone_number[-4:]}",
+            "department": "Operations",
+            "role": role,
+            "is_active": True,
+            "is_verified": True,
+        }
+    
+    user = _dev_users[phone_number]
+    
+    return {
+        "status": "success",
+        "user": user,
+        "token": id_token,
+        "message": f"Welcome! Role: {user['role']}"
+    }
+
+@app.get("/api/auth/me")
+async def get_current_user(
+    authorization: str = None,
+):
+    """Get current user from token"""
+    # DEV MODE: Extract phone from token
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.replace("Bearer ", "")
+    
+    # Try to find user by token pattern (dev_token_timestamp_phone)
+    for phone, user in _dev_users.items():
+        if phone in token:
+            return {"user": user}
+    
+    raise HTTPException(status_code=401, detail="Invalid token")
+
+@app.post("/api/auth/logout")
+async def logout():
+    """Logout user (client should clear token)"""
+    return {"status": "success", "message": "Logged out"}
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=settings.host, port=settings.port)

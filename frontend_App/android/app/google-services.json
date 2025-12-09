@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "900310351794",
+    "project_id": "kochi-metro-54b1f",
+    "storage_bucket": "kochi-metro-54b1f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:900310351794:android:09b912967df701b07baeab",
+        "android_client_info": {
+          "package_name": "com.sih.hasteai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-69HOC9ByfiSwwlPrcFxCI5mak2l0Dak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
