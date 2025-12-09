@@ -88,14 +88,17 @@ const impactToBadge = (value) => {
 
 function MetricCard({ label, value, suffix = '%', accent }) {
   return (
-    <div className="card bg-slate-900/85 border border-slate-700/70">
+    <div className="card">
       <div className="card-body">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-200">{label}</p>
+          <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{label}</p>
           <span className={`badge border ${impactToBadge(value)}`}>{value}{suffix}</span>
         </div>
-        <div className="mt-2 text-3xl font-display font-bold text-white drop-shadow">{value}{suffix}</div>
-        <div className="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden border border-slate-700/80">
+        <div className="mt-2 text-3xl font-display font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>{value}{suffix}</div>
+        <div className="mt-3 h-2 rounded-full overflow-hidden border" style={{
+          background: 'rgba(var(--color-bg-tertiary), 0.5)',
+          borderColor: 'rgb(var(--color-border))'
+        }}>
           <div
             className="h-full rounded-full transition-all shadow"
             style={{
@@ -113,9 +116,12 @@ function AgentCard({ agent, isDown, onToggle }) {
   const Icon = agent.icon
   return (
     <div
-      className={`border rounded-xl p-4 bg-slate-900/85 ${
-        isDown ? 'border-red-500/50 shadow-lg shadow-red-900/30' : 'border-slate-700/60 shadow-md shadow-black/20'
-      }`}
+      className={`border rounded-xl p-4 ${isDown ? 'border-red-500/50 shadow-lg' : 'shadow-md'
+        }`}
+      style={{
+        background: 'var(--glass-bg)',
+        borderColor: isDown ? 'rgba(239, 68, 68, 0.5)' : 'rgb(var(--color-border))'
+      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -123,23 +129,22 @@ function AgentCard({ agent, isDown, onToggle }) {
             <Icon className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-slate-50 drop-shadow-sm">{agent.name}</p>
-            <p className="text-xs text-slate-200">{agent.description}</p>
+            <p className="font-semibold" style={{ color: 'rgb(var(--color-text-primary))' }}>{agent.name}</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>{agent.description}</p>
           </div>
         </div>
         <button
           onClick={onToggle}
-          className={`px-3 py-1.5 text-xs rounded-full border transition ${
-            isDown
-              ? 'bg-red-500/20 text-red-200 border-red-500/40'
-              : 'bg-emerald-500/15 text-emerald-200 border-emerald-500/40'
-          }`}
+          className={`px-3 py-1.5 text-xs rounded-full border transition ${isDown
+              ? 'bg-red-500/20 text-red-600 dark:text-red-200 border-red-500/40'
+              : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-200 border-emerald-500/40'
+            }`}
         >
           {isDown ? 'Restore' : 'Simulate Down'}
         </button>
       </div>
-      <div className="mt-3 text-xs text-slate-200">
-        <span className="font-medium text-slate-100">Fallback:</span> {agent.fallback}
+      <div className="mt-3 text-xs" style={{ color: 'rgb(var(--color-text-secondary))' }}>
+        <span className="font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>Fallback:</span> {agent.fallback}
       </div>
     </div>
   )
@@ -256,18 +261,18 @@ export default function ResilienceLab() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold text-white drop-shadow">Resilience Lab</h1>
-              <p className="text-slate-200 text-sm">{outageCopy}</p>
+              <h1 className="text-2xl font-display font-bold" style={{ color: 'rgb(var(--color-text-primary))' }}>Resilience Lab</h1>
+              <p className="text-sm" style={{ color: 'rgb(var(--color-text-secondary))' }}>{outageCopy}</p>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-200">
-            <span className="badge border border-emerald-500/50 bg-emerald-500/15 text-emerald-100">
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <span className="badge border border-emerald-500/50 bg-emerald-500/15 text-emerald-600 dark:text-emerald-100">
               Local constraints always active
             </span>
-            <span className="badge border border-blue-500/50 bg-blue-500/15 text-blue-100">
+            <span className="badge border border-blue-500/50 bg-blue-500/15 text-blue-600 dark:text-blue-100">
               No backend calls — instant demo
             </span>
-            <span className="badge border border-purple-500/50 bg-purple-500/15 text-purple-100">
+            <span className="badge border border-purple-500/50 bg-purple-500/15 text-purple-600 dark:text-purple-100">
               Multi-agent shutdown demo
             </span>
           </div>
@@ -307,63 +312,66 @@ export default function ResilienceLab() {
         </div>
 
         <div className="space-y-4">
-          <div className="card bg-slate-900/85 border border-slate-700/60">
+          <div className="card">
             <div className="card-header flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-300" />
-              <h3 className="font-semibold text-white text-sm">Local Constraint Rules</h3>
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <h3 className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Local Constraint Rules</h3>
             </div>
             <div className="card-body space-y-2">
               {rulebook.map((rule, idx) => (
                 <div key={idx} className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-emerald-500/25 text-emerald-100 flex items-center justify-center text-xs border border-emerald-500/40">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/25 text-emerald-600 dark:text-emerald-100 flex items-center justify-center text-xs border border-emerald-500/40">
                     {idx + 1}
                   </div>
-                  <p className="text-sm text-slate-100">{rule}</p>
+                  <p className="text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>{rule}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="card bg-slate-900/85 border border-slate-700/60">
+          <div className="card">
             <div className="card-header flex items-center gap-2">
-              <ServerCrash className="w-4 h-4 text-red-300" />
-              <h3 className="font-semibold text-white text-sm">What breaks?</h3>
+              <ServerCrash className="w-4 h-4 text-red-500" />
+              <h3 className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>What breaks?</h3>
             </div>
-            <div className="card-body space-y-3 text-sm text-slate-100">
+            <div className="card-body space-y-3 text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-300" />
+                <AlertTriangle className="w-4 h-4 text-amber-500" />
                 <span>{impact.crowdingRisk}% risk of crowding if demand + alerting are down.</span>
               </div>
               <div className="flex items-center gap-2">
-                <PlugZap className="w-4 h-4 text-amber-300" />
+                <PlugZap className="w-4 h-4 text-amber-500" />
                 <span>Energy savings drops to {impact.energy}% if optimizer is off.</span>
               </div>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-200" />
+                <Sparkles className="w-4 h-4 text-blue-500" />
                 <span>Narratives fall back to rule-based summaries (LLM off).</span>
               </div>
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4 text-purple-200" />
+                <Activity className="w-4 h-4 text-purple-500" />
                 <span>Depot move reliability {impact.availability}% with rule-based shunting.</span>
               </div>
               <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-200" />
+                <AlertTriangle className="w-4 h-4 text-red-500" />
                 <span>Detection coverage {impact.detection}% if alerting agent fails.</span>
               </div>
             </div>
           </div>
 
           {decisions.length > 0 && (
-            <div className="card bg-slate-900/90 border border-emerald-500/40">
+            <div className="card border-emerald-500/40">
               <div className="card-header flex items-center gap-2">
-                <ClipboardCheck className="w-4 h-4 text-emerald-300" />
-                <h3 className="font-semibold text-white text-sm">Local Rule Decisions</h3>
+                <ClipboardCheck className="w-4 h-4 text-emerald-500" />
+                <h3 className="font-semibold text-sm" style={{ color: 'rgb(var(--color-text-primary))' }}>Local Rule Decisions</h3>
               </div>
               <div className="card-body space-y-3">
                 {decisions.map((item, idx) => (
-                  <div key={idx} className="p-3 rounded-lg bg-slate-800/70 border border-slate-700/70">
-                    <p className="text-xs uppercase tracking-wide text-emerald-300">{item.title}</p>
-                    <p className="text-sm text-slate-100 mt-1">{item.decision}</p>
+                  <div key={idx} className="p-3 rounded-lg border" style={{
+                    background: 'rgba(var(--color-bg-tertiary), 0.5)',
+                    borderColor: 'rgb(var(--color-border))'
+                  }}>
+                    <p className="text-xs uppercase tracking-wide text-emerald-600 dark:text-emerald-300">{item.title}</p>
+                    <p className="text-sm mt-1" style={{ color: 'rgb(var(--color-text-primary))' }}>{item.decision}</p>
                   </div>
                 ))}
               </div>
