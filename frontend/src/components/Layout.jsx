@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { 
   LayoutDashboard, 
@@ -10,20 +10,27 @@ import {
   Bell,
   MessageSquare,
   ChevronRight,
-  Zap
+  Zap,
+  LogOut
 } from 'lucide-react'
 import AICopilot from './AICopilot'
 import ThemeToggle from './ThemeToggle'
 import LanguageSelector from './LanguageSelector'
 
-export default function Layout({ children }) {
+export default function Layout() {
   const { t } = useTranslation()
   const location = useLocation()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [copilotOpen, setCopilotOpen] = useState(false)
 
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn')
+    navigate('/login')
+  }
+
   const navItems = [
-    { path: '/', icon: LayoutDashboard, label: t('nav.dashboard') },
+    { path: '/dashboard', icon: LayoutDashboard, label: t('nav.dashboard') },
     { path: '/planner', icon: Calendar, label: t('nav.planner') },
     { path: '/what-if', icon: FlaskConical, label: t('nav.whatif') },
     { path: '/simulator', icon: Zap, label: t('nav.simulator') },
@@ -141,6 +148,13 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-4">
             <LanguageSelector />
             <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              className="p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
             <div className="text-right">
               <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('app.location')}</div>
               <div className="text-xs" style={{ color: 'rgb(var(--color-text-tertiary))' }}>
@@ -160,7 +174,7 @@ export default function Layout({ children }) {
 
         {/* Page content */}
         <main className="flex-1 p-6 overflow-auto">
-          {children}
+          <Outlet />
         </main>
       </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Train,
@@ -126,6 +126,7 @@ function AlertItem({ severity, title, message, time }) {
 
 export default function Dashboard() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -133,6 +134,14 @@ export default function Dashboard() {
   const [briefing, setBriefing] = useState(null)
   const [briefingLoading, setBriefingLoading] = useState(false)
   const [error, setError] = useState(null)
+
+  // Check if user is logged in
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn')
+    if (!isLoggedIn) {
+      navigate('/login')
+    }
+  }, [navigate])
 
   const fetchSummary = async () => {
     try {
