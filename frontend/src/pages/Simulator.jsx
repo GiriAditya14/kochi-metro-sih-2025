@@ -1056,7 +1056,7 @@ export default function Simulator() {
                           </div>
                           <div className="text-sm text-slate-400">
                             {results.results?.summary?.is_feasible 
-                              ? `${results.results.summary.time_buffer_minutes} minutes buffer remaining`
+                              ? `${results.results?.summary?.time_buffer_minutes || 0} minutes buffer remaining`
                               : 'Consider adding more shunters or extending time window'}
                           </div>
                         </div>
