@@ -9,11 +9,13 @@ import {
   RefreshControl,
   Modal,
   TextInput,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getPlans, getPlan, generatePlan, approvePlan, overrideAssignment, getAlerts } from '../lib/api';
 import { mockPlans, mockAssignments, mockAlerts } from '../data/mockData';
 import { colors, getScoreColor } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 interface Assignment {
   id: number;
@@ -179,6 +181,7 @@ const TrainCard = ({
 
 export default function InductionPlannerScreen() {
   const navigation = useNavigation<any>();
+  const { user, canAccess } = useAuth();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -191,6 +194,11 @@ export default function InductionPlannerScreen() {
   const [overrideType, setOverrideType] = useState('SERVICE');
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideLoading, setOverrideLoading] = useState(false);
+
+  // Role-based permissions
+  const canGeneratePlan = canAccess('generatePlan');
+  const canApprovePlan = canAccess('approvePlan');
+  const canOverride = canAccess('overrideAssignment');
 
   const fetchPlans = async () => {
     try {
@@ -335,21 +343,28 @@ export default function InductionPlannerScreen() {
 
         {/* Action Buttons */}
         <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={styles.secondaryBtn}
-            onPress={handleGeneratePlan}
-            disabled={generating}
-          >
-            {generating ? (
-              <ActivityIndicator size="small" color={colors.text.primary} />
-            ) : (
-              <Text style={styles.secondaryBtnText}>🔄 Regenerate</Text>
-            )}
-          </TouchableOpacity>
-          {selectedPlan && selectedPlan.status !== 'approved' && (
+          {canGeneratePlan && (
+            <TouchableOpacity
+              style={styles.secondaryBtn}
+              onPress={handleGeneratePlan}
+              disabled={generating}
+            >
+              {generating ? (
+                <ActivityIndicator size="small" color={colors.text.primary} />
+              ) : (
+                <Text style={styles.secondaryBtnText}>🔄 Regenerate</Text>
+              )}
+            </TouchableOpacity>
+          )}
+          {canApprovePlan && selectedPlan && selectedPlan.status !== 'approved' && (
             <TouchableOpacity style={styles.successBtn} onPress={handleApprovePlan}>
               <Text style={styles.successBtnText}>✓ Approve Plan</Text>
             </TouchableOpacity>
+          )}
+          {!canGeneratePlan && !canApprovePlan && (
+            <View style={styles.viewOnlyBadge}>
+              <Text style={styles.viewOnlyText}>👁️ View Only Mode</Text>
+            </View>
           )}
         </View>
 
@@ -990,5 +1005,17 @@ const styles = StyleSheet.create({
   },
   btnDisabled: {
     opacity: 0.5,
+  },
+  viewOnlyBadge: {
+    backgroundColor: colors.slate[700],
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  viewOnlyText: {
+    color: colors.text.muted,
+    fontSize: 13,
   },
 });

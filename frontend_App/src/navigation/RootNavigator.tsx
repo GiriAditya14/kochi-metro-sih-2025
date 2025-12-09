@@ -12,7 +12,7 @@ import AICopilotScreen from '../screens/AICopilotScreen';
 import LoginScreen from '../screens/LoginScreen';
 import DataInjectionScreen from '../screens/DataInjectionScreen';
 import { colors } from '../lib/utils';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, ROLE_PERMISSIONS } from '../context/AuthContext';
 
 export type RootStackParamList = {
   Dashboard: undefined;
@@ -47,20 +47,20 @@ const MainStack = () => (
   </Stack.Navigator>
 );
 
-// Navigation items matching web frontend
+// Navigation items matching web frontend with role-based access
 const navItems = [
-  { name: 'Dashboard', label: 'Dashboard', icon: '📊' },
-  { name: 'InductionPlanner', label: 'Night Induction Planner', icon: '📅' },
-  { name: 'WhatIfSimulator', label: 'What-If Simulator', icon: '🧪' },
-  { name: 'DataPlayground', label: 'Data Playground', icon: '💾' },
-  { name: 'DataInjection', label: 'Data Injection', icon: '📤', workerOnly: true },
-  { name: 'Alerts', label: 'Alerts', icon: '🔔' },
+  { name: 'Dashboard', label: 'Dashboard', icon: '📊', feature: 'dashboard' as const },
+  { name: 'InductionPlanner', label: 'Night Induction Planner', icon: '📅', feature: 'inductionPlanner' as const },
+  { name: 'WhatIfSimulator', label: 'What-If Simulator', icon: '🧪', feature: 'whatIfSimulator' as const },
+  { name: 'DataPlayground', label: 'Data Playground', icon: '💾', feature: 'dataPlayground' as const },
+  { name: 'DataInjection', label: 'Data Injection', icon: '📤', feature: 'dataInjection' as const },
+  { name: 'Alerts', label: 'Alerts', icon: '🔔', feature: 'alerts' as const },
 ];
 
 // Custom Drawer Content
 const CustomDrawerContent = (props: DrawerContentComponentProps) => {
   const currentRoute = props.state.routeNames[props.state.index];
-  const { user, logout, hasPermission } = useAuth();
+  const { user, logout, canAccess, getRoleLabel } = useAuth();
 
   return (
     <SafeAreaView style={styles.drawerContainer}>
@@ -86,7 +86,7 @@ const CustomDrawerContent = (props: DrawerContentComponentProps) => {
             </View>
             <View style={styles.userInfo}>
               <Text style={styles.userName}>{user.name || user.phone_number}</Text>
-              <Text style={styles.userRole}>{user.role.toUpperCase()}</Text>
+              <Text style={styles.userRole}>{getRoleLabel()}</Text>
             </View>
           </View>
         )}
@@ -94,8 +94,8 @@ const CustomDrawerContent = (props: DrawerContentComponentProps) => {
         {/* Navigation Items */}
         <View style={styles.navContainer}>
           {navItems.map((item) => {
-            // Hide worker-only items for regular users
-            if ((item as any).workerOnly && !hasPermission('worker')) {
+            // Hide items user doesn't have access to
+            if (!canAccess(item.feature)) {
               return null;
             }
             const isActive = currentRoute === item.name;

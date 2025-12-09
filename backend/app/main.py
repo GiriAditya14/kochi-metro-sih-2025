@@ -1709,28 +1709,27 @@ async def get_override_logs(
 
 # ==================== Authentication ====================
 
-# In-memory user store for dev mode (replace with database in production)
-_dev_users = {}
-
 @app.post("/api/auth/verify-token")
-async def verify_token(
+async def verify_phone_token(
     data: Dict[str, Any],
     db: Session = Depends(get_db)
 ):
     """
-    Verify token and return/create user.
+    Verify phone OTP token and return/create user.
     DEV MODE: Accepts any token and creates user if not exists.
     PRODUCTION: Should verify Firebase ID token.
     """
     id_token = data.get("id_token")
-    phone_number = data.get("phone_number", "").replace("+91", "")
+    phone_number = data.get("phone_number", "").replace("+91", "").replace(" ", "")
     
     if not id_token or not phone_number:
         raise HTTPException(status_code=400, detail="Missing id_token or phone_number")
     
-    # DEV MODE: Create or get user from memory
-    if phone_number not in _dev_users:
-        # Assign role based on phone number for testing
+    # Check if user exists in database
+    user = db.query(User).filter(User.phone_number == phone_number).first()
+    
+    if not user:
+        # Create new user - assign role based on phone number for DEV testing
         # Admin: ends with 0, Worker: ends with 1-5, User: ends with 6-9
         last_digit = int(phone_number[-1]) if phone_number else 0
         if last_digit == 0:
@@ -1740,49 +1739,127 @@ async def verify_token(
         else:
             role = "user"
         
-        _dev_users[phone_number] = {
-            "id": len(_dev_users) + 1,
-            "phone_number": phone_number,
-            "name": f"User {phone_number[-4:]}",
-            "email": f"user{phone_number[-4:]}@kmrl.dev",
-            "employee_id": f"EMP{phone_number[-4:]}",
-            "department": "Operations",
-            "role": role,
-            "is_active": True,
-            "is_verified": True,
-        }
+        user = User(
+            phone_number=phone_number,
+            name=f"User {phone_number[-4:]}",
+            email=f"user{phone_number[-4:]}@kmrl.dev",
+            employee_id=f"EMP{phone_number[-4:]}",
+            department="Operations",
+            role=role,
+            is_active=True,
+            is_verified=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
     
-    user = _dev_users[phone_number]
+    # Generate token using auth service
+    token = create_token(user)
     
     return {
         "status": "success",
-        "user": user,
-        "token": id_token,
-        "message": f"Welcome! Role: {user['role']}"
+        "user": user.to_dict(),
+        "token": token,
+        "message": f"Welcome! Role: {user.role}"
+    }
+
+@app.post("/api/auth/login")
+async def login_email(
+    data: Dict[str, Any],
+    db: Session = Depends(get_db)
+):
+    """Login with email and password"""
+    email = data.get("email")
+    password = data.get("password")
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Missing email or password")
+    
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not user.password_hash:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account disabled")
+    
+    token = create_token(user)
+    
+    return {
+        "status": "success",
+        "user": user.to_dict(),
+        "token": token
+    }
+
+@app.post("/api/auth/register")
+async def register_email(
+    data: Dict[str, Any],
+    db: Session = Depends(get_db)
+):
+    """Register with email and password (admin only in production)"""
+    email = data.get("email")
+    password = data.get("password")
+    name = data.get("name")
+    role = data.get("role", "user")
+    
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Missing email or password")
+    
+    # Check if email exists
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    user = User(
+        email=email,
+        password_hash=hash_password(password),
+        name=name,
+        role=role,
+        is_active=True,
+        is_verified=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    token = create_token(user)
+    
+    return {
+        "status": "success",
+        "user": user.to_dict(),
+        "token": token
     }
 
 @app.get("/api/auth/me")
-async def get_current_user(
-    authorization: str = None,
-):
-    """Get current user from token"""
-    # DEV MODE: Extract phone from token
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    
-    token = authorization.replace("Bearer ", "")
-    
-    # Try to find user by token pattern (dev_token_timestamp_phone)
-    for phone, user in _dev_users.items():
-        if phone in token:
-            return {"user": user}
-    
-    raise HTTPException(status_code=401, detail="Invalid token")
+async def get_me(current_user: User = Depends(get_current_user)):
+    """Get current authenticated user"""
+    return {"user": current_user.to_dict()}
 
 @app.post("/api/auth/logout")
 async def logout():
     """Logout user (client should clear token)"""
     return {"status": "success", "message": "Logged out"}
+
+@app.put("/api/auth/profile")
+async def update_profile(
+    data: Dict[str, Any],
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update user profile"""
+    if data.get("name"):
+        current_user.name = data["name"]
+    if data.get("department"):
+        current_user.department = data["department"]
+    if data.get("employee_id"):
+        current_user.employee_id = data["employee_id"]
+    
+    db.commit()
+    db.refresh(current_user)
+    
+    return {"status": "success", "user": current_user.to_dict()}
 
 
 if __name__ == "__main__":

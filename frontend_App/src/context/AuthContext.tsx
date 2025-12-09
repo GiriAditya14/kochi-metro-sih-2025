@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 export type UserRole = 'admin' | 'worker' | 'user';
 
@@ -15,6 +16,32 @@ export interface User {
   is_verified: boolean;
 }
 
+// Role hierarchy for permission checks
+const ROLE_HIERARCHY: Record<UserRole, number> = {
+  user: 1,
+  worker: 2,
+  admin: 3,
+};
+
+// Role-based feature access
+export const ROLE_PERMISSIONS = {
+  // Features accessible by role
+  dashboard: ['user', 'worker', 'admin'],
+  inductionPlanner: ['user', 'worker', 'admin'],
+  whatIfSimulator: ['worker', 'admin'],
+  dataPlayground: ['worker', 'admin'],
+  dataInjection: ['worker', 'admin'],
+  alerts: ['user', 'worker', 'admin'],
+  aiCopilot: ['user', 'worker', 'admin'],
+  // Actions
+  approvePlan: ['admin'],
+  overrideAssignment: ['worker', 'admin'],
+  generatePlan: ['worker', 'admin'],
+  uploadData: ['worker', 'admin'],
+  acknowledgeAlert: ['worker', 'admin'],
+  resolveAlert: ['admin'],
+};
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
@@ -24,15 +51,11 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (user: User) => void;
   hasPermission: (requiredRole: UserRole) => boolean;
+  canAccess: (feature: keyof typeof ROLE_PERMISSIONS) => boolean;
+  getRoleLabel: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const ROLE_HIERARCHY: Record<UserRole, number> = {
-  user: 1,
-  worker: 2,
-  admin: 3,
-};
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -49,17 +72,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const storedUser = await AsyncStorage.getItem('auth_user');
       
       if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        // Validate user has required fields
+        if (parsedUser.id && parsedUser.role) {
+          setToken(storedToken);
+          setUser(parsedUser);
+        } else {
+          // Invalid user data, clear storage
+          await AsyncStorage.removeItem('auth_token');
+          await AsyncStorage.removeItem('auth_user');
+        }
       }
     } catch (error) {
       console.error('Error loading auth:', error);
+      // Clear potentially corrupted data
+      await AsyncStorage.removeItem('auth_token');
+      await AsyncStorage.removeItem('auth_user');
     } finally {
       setIsLoading(false);
     }
   };
 
   const login = async (newToken: string, newUser: User) => {
+    // Validate user object
+    if (!newUser.id || !newUser.role) {
+      throw new Error('Invalid user data');
+    }
+    
     setToken(newToken);
     setUser(newUser);
     await AsyncStorage.setItem('auth_token', newToken);
@@ -78,9 +117,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     AsyncStorage.setItem('auth_user', JSON.stringify(updatedUser));
   };
 
+  // Check if user has at least the required role level
   const hasPermission = (requiredRole: UserRole): boolean => {
     if (!user) return false;
     return ROLE_HIERARCHY[user.role] >= ROLE_HIERARCHY[requiredRole];
+  };
+
+  // Check if user can access a specific feature
+  const canAccess = (feature: keyof typeof ROLE_PERMISSIONS): boolean => {
+    if (!user) return false;
+    const allowedRoles = ROLE_PERMISSIONS[feature];
+    return allowedRoles.includes(user.role);
+  };
+
+  // Get human-readable role label
+  const getRoleLabel = (): string => {
+    if (!user) return 'Guest';
+    switch (user.role) {
+      case 'admin': return 'Administrator';
+      case 'worker': return 'Operations Staff';
+      case 'user': return 'Viewer';
+      default: return 'Unknown';
+    }
   };
 
   return (
@@ -94,6 +152,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout,
         updateUser,
         hasPermission,
+        canAccess,
+        getRoleLabel,
       }}
     >
       {children}

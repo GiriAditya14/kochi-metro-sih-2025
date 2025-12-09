@@ -13,7 +13,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../lib/utils';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, ROLE_PERMISSIONS } from '../context/AuthContext';
 import { API_BASE_URL } from '../lib/api';
 
 interface ExtractionResult {
@@ -28,13 +28,13 @@ interface ExtractionResult {
 }
 
 const DataInjectionScreen: React.FC = () => {
-  const { token, hasPermission } = useAuth();
+  const { token, canAccess, getRoleLabel } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<any>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [extractionResult, setExtractionResult] = useState<ExtractionResult | null>(null);
 
-  const canInject = hasPermission('worker');
+  const canInject = canAccess('dataInjection');
 
   const pickDocument = async () => {
     try {
