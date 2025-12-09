@@ -11,7 +11,8 @@ import {
   MessageSquare,
   ChevronRight,
   Zap,
-  LogOut
+  LogOut,
+  Shield
 } from 'lucide-react'
 import AICopilot from './AICopilot'
 import ThemeToggle from './ThemeToggle'
@@ -31,6 +32,7 @@ export default function Layout({ children }) {
     { path: '/planner', icon: Calendar, label: t('nav.planner') },
     { path: '/what-if', icon: FlaskConical, label: t('nav.whatif') },
     { path: '/simulator', icon: Zap, label: t('nav.simulator') },
+    { path: '/resilience', icon: Shield, label: t('nav.resilience') },
     { path: '/data', icon: Database, label: t('nav.data') },
     { path: '/alerts', icon: Bell, label: t('nav.alerts') },
   ]

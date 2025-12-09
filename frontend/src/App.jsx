@@ -9,6 +9,7 @@ import DataPlayground from './pages/DataPlayground'
 import TrainDetails from './pages/TrainDetails'
 import Alerts from './pages/Alerts'
 import Simulator from './pages/Simulator'
+import ResilienceLab from './pages/ResilienceLab'
 
 function App() {
   return (
@@ -44,6 +45,14 @@ function App() {
         element={
           <ProtectedRoute>
             <Layout><Simulator /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/resilience"
+        element={
+          <ProtectedRoute>
+            <Layout><ResilienceLab /></Layout>
           </ProtectedRoute>
         }
       />
