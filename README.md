@@ -1,4 +1,15 @@
-# 🚇 KMRL Train Induction Planning System
+SIH Grand Finale 2025
+Problem Statement ID: SIH25081
+Team Name: HASTE
+Team ID: 85842
+Nodal Centre: NIT Durgapur
+College Name: Oriental Institute of Science and Technology, Bhopal
+Team Leader: Chaitanya Sharma
+Member 1: Sanju Kumari
+Member 2: Aditya Giri
+Member 3: Ansh Mishra
+Member 4: Shrey Shrivastava
+Member 5: Harshawardhan Shrivastava# 🚇 KMRL Train Induction Planning System
 
 <div align="center">
 
