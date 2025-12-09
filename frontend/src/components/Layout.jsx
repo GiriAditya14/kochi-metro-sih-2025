@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { 
   LayoutDashboard, 
@@ -10,15 +10,20 @@ import {
   Bell,
   MessageSquare,
   ChevronRight,
-  Zap
+  Zap,
+  LogOut,
+  Shield
 } from 'lucide-react'
 import AICopilot from './AICopilot'
 import ThemeToggle from './ThemeToggle'
 import LanguageSelector from './LanguageSelector'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Layout({ children }) {
   const { t } = useTranslation()
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copilotOpen, setCopilotOpen] = useState(false)
 
@@ -27,6 +32,7 @@ export default function Layout({ children }) {
     { path: '/planner', icon: Calendar, label: t('nav.planner') },
     { path: '/what-if', icon: FlaskConical, label: t('nav.whatif') },
     { path: '/simulator', icon: Zap, label: t('nav.simulator') },
+    { path: '/resilience', icon: Shield, label: t('nav.resilience') },
     { path: '/data', icon: Database, label: t('nav.data') },
     { path: '/alerts', icon: Bell, label: t('nav.alerts') },
   ]
@@ -141,6 +147,33 @@ export default function Layout({ children }) {
           <div className="flex items-center gap-4">
             <LanguageSelector />
             <ThemeToggle />
+            <div className="relative group">
+              <button
+                onClick={() => {
+                  logout()
+                  navigate('/login')
+                }}
+                className="p-2 rounded-full border transition hover:bg-slate-200 dark:hover:bg-slate-800"
+                style={{
+                  background: 'var(--glass-bg)',
+                  borderColor: 'rgb(var(--color-border))',
+                  color: 'rgb(var(--color-text-primary))'
+                }}
+                aria-label="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+              <div
+                className="absolute right-0 mt-2 px-2 py-1 rounded text-xs shadow-lg transition-opacity opacity-0 group-hover:opacity-100 z-50"
+                style={{
+                  background: 'var(--glass-bg)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'rgb(var(--color-text-primary))'
+                }}
+              >
+                Logout
+              </div>
+            </div>
             <div className="text-right">
               <div className="text-sm font-medium" style={{ color: 'rgb(var(--color-text-primary))' }}>{t('app.location')}</div>
               <div className="text-xs" style={{ color: 'rgb(var(--color-text-tertiary))' }}>

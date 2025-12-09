@@ -21,12 +21,15 @@ from .models import (
     MileageMeter,
     CleaningRecord, CleaningStatus, CleaningType, CleaningBay,
     DepotTrack, TrainPosition,
-    NightPlan, PlanAssignment, AssignmentType, PlanStatus, OverrideLog, Alert, AlertSeverity
+    NightPlan, PlanAssignment, AssignmentType, PlanStatus, OverrideLog, Alert, AlertSeverity,
+    User,
 )
 from .models.database import init_db, test_connection, get_table_counts
 from .services import MockDataGenerator, TrainInductionOptimizer, AICopilot, FileProcessor
 from .services.simulation_service import SimulationService
 from .config import settings, is_ai_enabled, is_groq_enabled, is_cloudinary_enabled, get_service_status, is_postgresql
+# Local auth
+from .services.auth_service import hash_password, verify_password, create_token, get_current_user, require_role
 
 # Create FastAPI app
 app = FastAPI(
@@ -132,6 +135,51 @@ async def get_database_status(db: Session = Depends(get_db)):
         "timestamp": datetime.utcnow().isoformat()
     }
 
+# ==================== Authentication (Local Email/Password) ====================
+
+ALLOWED_ROLES = {"admin", "supervisor", "worker"}
+
+
+@app.post("/api/auth/signup")
+async def signup_local(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+    role = (payload.get("role") or "worker").lower()
+
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password are required")
+    if role not in ALLOWED_ROLES:
+        raise HTTPException(status_code=400, detail="Invalid role")
+
+    existing = db.query(User).filter(User.email == email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    user = User(email=email, password_hash=hash_password(password), role=role)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    token = create_token(user)
+    return {"token": token, "user": user.to_dict()}
+
+
+@app.post("/api/auth/login")
+async def login_local(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    email = (payload.get("email") or "").strip().lower()
+    password = payload.get("password") or ""
+    user = db.query(User).filter(User.email == email).first()
+    if not user or not verify_password(password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_token(user)
+    return {"token": token, "user": user.to_dict()}
+
+
+@app.get("/api/auth/me")
+async def auth_me(current_user: User = Depends(get_current_user)):
+    return {"user": current_user.to_dict()}
+
+# ==================== Intelligent File Upload (Cloudinary + Groq) ====================
 # ==================== Intelligent File Upload (Cloudinary + Groq) ====================
 
 @app.post("/api/upload/intelligent")

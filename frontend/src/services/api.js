@@ -15,9 +15,13 @@ const api = axios.create({
   timeout: 30000 // 30 second timeout
 })
 
-// Add request interceptor for debugging
+// Add request interceptor for auth + debugging
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     if (import.meta.env.DEV) {
       console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`)
     }
@@ -159,5 +163,14 @@ export const getSimulationStations = () => api.get('/simulation/stations')
 export const runPassengerSimulation = (params) => api.post('/simulation/passenger', params)
 export const runEnergySimulation = (params) => api.post('/simulation/energy', params)
 export const runCombinedSimulation = (params) => api.post('/simulation/combined', params)
+
+// Simple auth (local email/password)
+export const signup = (email, password, role = 'worker') =>
+  api.post('/auth/signup', { email, password, role })
+
+export const login = (email, password) =>
+  api.post('/auth/login', { email, password })
+
+export const me = () => api.get('/auth/me')
 
 export default api

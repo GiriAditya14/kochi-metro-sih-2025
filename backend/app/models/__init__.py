@@ -7,6 +7,7 @@ from .mileage import MileageMeter
 from .cleaning import CleaningRecord, CleaningBay, CleaningStatus, CleaningType
 from .depot import DepotTrack, TrainPosition
 from .plans import NightPlan, PlanAssignment, OverrideLog, Alert, AssignmentType, PlanStatus, AlertSeverity
+from .users import User
 
 __all__ = [
     # Database
@@ -26,5 +27,7 @@ __all__ = [
     # Depot
     "DepotTrack", "TrainPosition",
     # Plans
-    "NightPlan", "PlanAssignment", "OverrideLog", "Alert", "AssignmentType", "PlanStatus", "AlertSeverity"
+    "NightPlan", "PlanAssignment", "OverrideLog", "Alert", "AssignmentType", "PlanStatus", "AlertSeverity",
+    # Users
+    "User",
 ]
