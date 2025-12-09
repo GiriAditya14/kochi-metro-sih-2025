@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { 
-  Train, 
-  CheckCircle, 
+import { useTranslation } from 'react-i18next'
+import {
+  Train,
+  CheckCircle,
   AlertTriangle,
   Clock,
   Wrench,
@@ -20,10 +21,10 @@ import {
 } from 'lucide-react'
 import { getPlans, getPlan, generatePlan, approvePlan, overrideAssignment, getAlerts } from '../services/api'
 
-function TrainCard({ assignment, onOverride }) {
+function TrainCard({ assignment, onOverride, t }) {
   const [expanded, setExpanded] = useState(false)
   const train = assignment.train
-  
+
   const assignmentColors = {
     SERVICE: 'emerald',
     STANDBY: 'blue',
@@ -32,12 +33,12 @@ function TrainCard({ assignment, onOverride }) {
     IBL_BOTH: 'amber',
     OUT_OF_SERVICE: 'slate'
   }
-  
+
   const color = assignmentColors[assignment.assignment_type] || 'slate'
 
   return (
     <div className={`card border-l-4 border-l-${color}-500 hover:border-slate-700 transition-all`}>
-      <div 
+      <div
         className="p-4 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
@@ -48,108 +49,110 @@ function TrainCard({ assignment, onOverride }) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-display font-semibold text-white">
+                <span className="font-display font-semibold text-slate-900 dark:text-white">
                   {train?.train_id || `Train #${assignment.train_id}`}
                 </span>
                 {assignment.service_rank && (
-                  <span className="text-xs bg-slate-700 px-2 py-0.5 rounded">
+                  <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded">
                     #{assignment.service_rank}
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Track: {assignment.assigned_track || 'N/A'} • 
-                Position: {assignment.assigned_position ?? 'N/A'}
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                {t('planner.track')}: {assignment.assigned_track || 'N/A'} •
+                {t('planner.position')}: {assignment.assigned_position ?? 'N/A'}
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
-            <div className={`badge badge-${
-              assignment.assignment_type === 'SERVICE' ? 'success' :
+            <div className={`badge badge-${assignment.assignment_type === 'SERVICE' ? 'success' :
               assignment.assignment_type === 'STANDBY' ? 'info' :
-              assignment.assignment_type?.includes('IBL') ? 'warning' :
-              'danger'
-            }`}>
-              {assignment.assignment_type?.replace('_', ' ')}
+                assignment.assignment_type?.includes('IBL') ? 'warning' :
+                  'danger'
+              }`}>
+              {assignment.assignment_type === 'SERVICE' ? t('planner.service').toUpperCase() :
+                assignment.assignment_type === 'STANDBY' ? t('planner.standby').toUpperCase() :
+                  assignment.assignment_type === 'IBL_MAINTENANCE' ? `${t('planner.ibl')} - ${t('planner.maintenance')}`.toUpperCase() :
+                    assignment.assignment_type === 'IBL_CLEANING' ? `${t('planner.ibl')} - ${t('planner.cleaning')}`.toUpperCase() :
+                      assignment.assignment_type === 'IBL_BOTH' ? `${t('planner.ibl')} - ${t('planner.both')}`.toUpperCase() :
+                        assignment.assignment_type === 'OUT_OF_SERVICE' ? t('planner.outOfService').toUpperCase() :
+                          assignment.assignment_type}
             </div>
-            {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+            {expanded ? <ChevronUp className="w-4 h-4 text-slate-600 dark:text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-600 dark:text-slate-400" />}
           </div>
         </div>
-        
+
         {/* Score bar */}
         <div className="mt-3 flex items-center gap-2">
-          <span className="text-xs text-slate-500 w-20">Overall Score</span>
+          <span className="text-xs text-slate-600 dark:text-slate-500 w-20">{t('planner.overallScore')}</span>
           <div className="flex-1 score-bar">
-            <div 
-              className={`score-fill ${
-                assignment.overall_score >= 80 ? 'excellent' :
+            <div
+              className={`score-fill ${assignment.overall_score >= 80 ? 'excellent' :
                 assignment.overall_score >= 60 ? 'good' :
-                assignment.overall_score >= 40 ? 'warning' :
-                'danger'
-              }`}
+                  assignment.overall_score >= 40 ? 'warning' :
+                    'danger'
+                }`}
               style={{ width: `${assignment.overall_score || 0}%` }}
             />
           </div>
-          <span className="text-xs text-slate-400 w-10 text-right">
+          <span className="text-xs text-slate-600 dark:text-slate-400 w-10 text-right">
             {assignment.overall_score?.toFixed(0) || 0}
           </span>
         </div>
       </div>
-      
+
       {expanded && (
         <div className="px-4 pb-4 pt-2 border-t border-slate-800 animate-fade-in">
           {/* Detailed scores */}
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
-              <p className="text-xs text-slate-500">Fitness</p>
-              <p className={`text-lg font-semibold ${
-                assignment.fitness_score >= 80 ? 'text-emerald-400' :
-                assignment.fitness_score >= 50 ? 'text-amber-400' :
-                'text-red-400'
-              }`}>
+              <p className="text-xs text-slate-600 dark:text-slate-500">{t('planner.fitness')}</p>
+              <p className={`text-lg font-semibold ${assignment.fitness_score >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+                assignment.fitness_score >= 50 ? 'text-amber-600 dark:text-amber-400' :
+                  'text-red-600 dark:text-red-400'
+                }`}>
                 {assignment.fitness_score?.toFixed(0) || 0}%
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Maintenance</p>
-              <p className={`text-lg font-semibold ${
-                assignment.maintenance_score >= 80 ? 'text-emerald-400' :
-                assignment.maintenance_score >= 50 ? 'text-amber-400' :
-                'text-red-400'
-              }`}>
+              <p className="text-xs text-slate-600 dark:text-slate-500">{t('planner.maintenance')}</p>
+              <p className={`text-lg font-semibold ${assignment.maintenance_score >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+                assignment.maintenance_score >= 50 ? 'text-amber-600 dark:text-amber-400' :
+                  'text-red-600 dark:text-red-400'
+                }`}>
                 {assignment.maintenance_score?.toFixed(0) || 0}%
               </p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">Branding</p>
-              <p className="text-lg font-semibold text-blue-400">
+              <p className="text-xs text-slate-600 dark:text-slate-500">{t('planner.branding')}</p>
+              <p className="text-lg font-semibold text-blue-600 dark:text-blue-400">
                 {assignment.branding_score?.toFixed(0) || 0}%
               </p>
             </div>
           </div>
-          
+
           {/* Reason */}
-          <div className="bg-slate-800/50 rounded-lg p-3 mb-3">
-            <p className="text-xs text-slate-400 mb-1">Assignment Reason</p>
-            <p className="text-sm text-slate-200">{assignment.assignment_reason || 'No specific reason recorded'}</p>
+          <div className="rounded-lg p-3 mb-3" style={{ background: 'rgba(var(--color-bg-tertiary), 0.5)' }}>
+            <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">{t('planner.assignmentReason')}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-200">{assignment.assignment_reason || t('planner.noReasonRecorded')}</p>
           </div>
-          
+
           {/* Override button */}
           {assignment.is_manual_override ? (
             <div className="flex items-center gap-2 text-amber-400 text-sm">
               <AlertTriangle className="w-4 h-4" />
-              <span>Manually overridden by {assignment.override_by}</span>
+              <span>{t('planner.manuallyOverridden')} {assignment.override_by}</span>
             </div>
           ) : (
             <div className="flex justify-end gap-2">
-              <Link 
+              <Link
                 to={`/trains/${assignment.train_id}`}
                 className="btn btn-ghost text-sm"
               >
-                View Details
+                {t('planner.viewDetails')}
               </Link>
-              <button 
+              <button
                 onClick={(e) => {
                   e.stopPropagation()
                   onOverride(assignment)
@@ -157,7 +160,7 @@ function TrainCard({ assignment, onOverride }) {
                 className="btn btn-secondary text-sm"
               >
                 <GripVertical className="w-4 h-4" />
-                Override
+                {t('planner.override')}
               </button>
             </div>
           )}
@@ -168,6 +171,7 @@ function TrainCard({ assignment, onOverride }) {
 }
 
 function OverrideModal({ assignment, planId, onClose, onSubmit }) {
+  const { t } = useTranslation()
   const [newAssignment, setNewAssignment] = useState(assignment.assignment_type)
   const [reason, setReason] = useState('')
   const [loading, setLoading] = useState(false)
@@ -195,56 +199,56 @@ function OverrideModal({ assignment, planId, onClose, onSubmit }) {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="card max-w-md w-full mx-4 animate-in">
         <div className="card-header flex items-center justify-between">
-          <h3 className="font-display font-semibold text-white">Override Assignment</h3>
-          <button onClick={onClose} className="p-1 hover:bg-slate-700 rounded">
-            <X className="w-5 h-5 text-slate-400" />
+          <h3 className="font-display font-semibold text-slate-900 dark:text-white">{t('planner.overrideAssignment')}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded">
+            <X className="w-5 h-5 text-slate-600 dark:text-slate-400" />
           </button>
         </div>
         <div className="card-body space-y-4">
           <div>
-            <p className="text-sm text-slate-400">Train</p>
-            <p className="text-lg font-semibold text-white">
-              {assignment.train?.train_id || `Train #${assignment.train_id}`}
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t('planner.train')}</p>
+            <p className="text-lg font-semibold text-slate-900 dark:text-white">
+              {assignment.train?.train_id || `${t('planner.train')} #${assignment.train_id}`}
             </p>
           </div>
-          
+
           <div>
-            <label className="text-sm text-slate-400 block mb-2">New Assignment</label>
+            <label className="text-sm text-slate-600 dark:text-slate-400 block mb-2">{t('planner.newAssignment')}</label>
             <select
               value={newAssignment}
               onChange={(e) => setNewAssignment(e.target.value)}
               className="input w-full"
             >
-              <option value="SERVICE">SERVICE</option>
-              <option value="STANDBY">STANDBY</option>
-              <option value="IBL_MAINTENANCE">IBL - Maintenance</option>
-              <option value="IBL_CLEANING">IBL - Cleaning</option>
-              <option value="IBL_BOTH">IBL - Both</option>
-              <option value="OUT_OF_SERVICE">Out of Service</option>
+              <option value="SERVICE">{t('planner.service')}</option>
+              <option value="STANDBY">{t('planner.standby')}</option>
+              <option value="IBL_MAINTENANCE">{t('planner.ibl')} - {t('planner.maintenance')}</option>
+              <option value="IBL_CLEANING">{t('planner.ibl')} - {t('planner.cleaning')}</option>
+              <option value="IBL_BOTH">{t('planner.ibl')} - {t('planner.both')}</option>
+              <option value="OUT_OF_SERVICE">{t('planner.outOfService')}</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="text-sm text-slate-400 block mb-2">Reason for Override *</label>
+            <label className="text-sm text-slate-600 dark:text-slate-400 block mb-2">{t('planner.reasonForOverride')} *</label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Explain why this override is necessary..."
+              placeholder={t('planner.explainOverride')}
               className="input w-full h-24 resize-none"
             />
           </div>
-          
+
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={onClose} className="btn btn-ghost">
-              Cancel
+              {t('common.cancel')}
             </button>
-            <button 
+            <button
               onClick={handleSubmit}
               disabled={!reason.trim() || loading}
               className="btn btn-primary"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Confirm Override
+              {t('planner.confirmOverride')}
             </button>
           </div>
         </div>
@@ -254,6 +258,7 @@ function OverrideModal({ assignment, planId, onClose, onSubmit }) {
 }
 
 export default function InductionPlanner() {
+  const { t, i18n } = useTranslation()
   const [plans, setPlans] = useState([])
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [assignments, setAssignments] = useState([])
@@ -268,7 +273,7 @@ export default function InductionPlanner() {
       setLoading(true)
       const response = await getPlans({ limit: 10 })
       setPlans(response.data.plans || [])
-      
+
       if (response.data.plans?.length > 0) {
         const latestPlan = response.data.plans[0]
         await loadPlanDetails(latestPlan.id)
@@ -286,7 +291,7 @@ export default function InductionPlanner() {
         getPlan(planId),
         getAlerts({ plan_id: planId })
       ])
-      
+
       setSelectedPlan(planResponse.data.plan)
       setAssignments(planResponse.data.assignments || [])
       setAlerts(alertsResponse.data.alerts || [])
@@ -356,7 +361,7 @@ export default function InductionPlanner() {
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
-          <p className="text-slate-400 mt-4">Loading plans...</p>
+          <p className="text-slate-600 dark:text-slate-400 mt-4">{t('planner.loadingPlans')}</p>
         </div>
       </div>
     )
@@ -367,13 +372,13 @@ export default function InductionPlanner() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-display font-bold text-white">Night Induction Planner</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Review and approve train assignments for tomorrow's service
+          <h1 className="text-2xl font-display font-bold text-slate-900 dark:text-white">{t('planner.title')}</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+            {t('planner.reviewSubtitle')}
           </p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={handleGeneratePlan}
             disabled={generating}
             className="btn btn-secondary"
@@ -383,15 +388,15 @@ export default function InductionPlanner() {
             ) : (
               <RefreshCw className="w-4 h-4" />
             )}
-            Regenerate Plan
+            {t('planner.regeneratePlan')}
           </button>
           {selectedPlan && selectedPlan.status !== 'approved' && (
-            <button 
+            <button
               onClick={handleApprovePlan}
               className="btn btn-success"
             >
               <Check className="w-4 h-4" />
-              Approve Plan
+              {t('planner.approvePlan')}
             </button>
           )}
         </div>
@@ -409,36 +414,35 @@ export default function InductionPlanner() {
               >
                 {plans.map(plan => (
                   <option key={plan.id} value={plan.id}>
-                    {plan.plan_id} - {new Date(plan.plan_date).toLocaleDateString()}
+                    {plan.plan_id} - {new Date(plan.plan_date).toLocaleDateString(i18n.language === 'hi' ? 'hi-IN' : i18n.language === 'ml' ? 'ml-IN' : 'en-US')}
                   </option>
                 ))}
               </select>
-              <div className={`badge ${
-                selectedPlan.status === 'approved' ? 'badge-success' :
+              <div className={`badge ${selectedPlan.status === 'approved' ? 'badge-success' :
                 selectedPlan.status === 'proposed' ? 'badge-info' :
-                selectedPlan.status === 'modified' ? 'badge-warning' :
-                'badge-danger'
-              }`}>
-                {selectedPlan.status?.toUpperCase()}
+                  selectedPlan.status === 'modified' ? 'badge-warning' :
+                    'badge-danger'
+                }`}>
+                {t(`planner.${selectedPlan.status}`).toUpperCase()}
               </div>
             </div>
-            
+
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="status-dot status-dot-success" />
-                <span className="text-sm text-slate-300">{stats.service} Service</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{stats.service} {t('planner.service')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="status-dot" style={{ background: '#3b82f6' }} />
-                <span className="text-sm text-slate-300">{stats.standby} Standby</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{stats.standby} {t('planner.standby')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="status-dot status-dot-warning" />
-                <span className="text-sm text-slate-300">{stats.ibl} IBL</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{stats.ibl} {t('planner.ibl')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="status-dot" style={{ background: '#64748b' }} />
-                <span className="text-sm text-slate-300">{stats.oos} OOS</span>
+                <span className="text-sm text-slate-700 dark:text-slate-300">{stats.oos} {t('planner.oos')}</span>
               </div>
             </div>
           </div>
@@ -451,24 +455,25 @@ export default function InductionPlanner() {
           <div className="p-4">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="w-5 h-5 text-amber-400" />
-              <span className="font-medium text-amber-400">{alerts.length} Alerts for this Plan</span>
+              <span className="font-medium text-amber-400">{alerts.length} {t('planner.alertsForPlan')}</span>
             </div>
             <div className="space-y-2">
               {alerts.slice(0, 3).map((alert, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-sm text-slate-300">
-                  <span className={`badge ${
-                    alert.severity === 'critical' ? 'badge-danger' :
+                <div key={idx} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                  <span className={`badge ${alert.severity === 'critical' ? 'badge-danger' :
                     alert.severity === 'warning' ? 'badge-warning' :
-                    'badge-info'
-                  }`}>
-                    {alert.severity}
+                      'badge-info'
+                    }`}>
+                    {alert.severity === 'critical' ? t('alerts.critical') :
+                      alert.severity === 'warning' ? t('alerts.warning') :
+                        t('alerts.info')}
                   </span>
                   <span>{alert.message}</span>
                 </div>
               ))}
               {alerts.length > 3 && (
                 <Link to="/alerts" className="text-sm text-blue-400 hover:text-blue-300">
-                  View all {alerts.length} alerts →
+                  {t('planner.viewAllAlerts', { count: alerts.length })} →
                 </Link>
               )}
             </div>
@@ -478,19 +483,18 @@ export default function InductionPlanner() {
 
       {/* Filter */}
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-400" />
-        <span className="text-sm text-slate-400">Filter:</span>
+        <Filter className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+        <span className="text-sm text-slate-600 dark:text-slate-400">{t('planner.filter')}:</span>
         {['all', 'service', 'standby', 'ibl', 'oos'].map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1 text-sm rounded-lg transition-colors ${
-              filter === f 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-            }`}
+            className={`px-3 py-1 text-sm rounded-lg transition-colors ${filter === f
+              ? 'bg-blue-600 text-white'
+              : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700'
+              }`}
           >
-            {f.toUpperCase()}
+            {t(`planner.${f}`).toUpperCase()}
           </button>
         ))}
       </div>
@@ -499,16 +503,17 @@ export default function InductionPlanner() {
       <div className="space-y-3">
         {sortedAssignments.length > 0 ? (
           sortedAssignments.map((assignment) => (
-            <TrainCard 
-              key={assignment.id} 
+            <TrainCard
+              key={assignment.id}
               assignment={assignment}
               onOverride={() => setOverrideModal(assignment)}
+              t={t}
             />
           ))
         ) : (
           <div className="card p-12 text-center">
-            <Train className="w-12 h-12 text-slate-600 mx-auto" />
-            <p className="text-slate-400 mt-4">No trains match the current filter</p>
+            <Train className="w-12 h-12 text-slate-400 dark:text-slate-600 mx-auto" />
+            <p className="text-slate-600 dark:text-slate-400 mt-4">{t('planner.noTrainsMatch')}</p>
           </div>
         )}
       </div>

@@ -25,6 +25,7 @@ from .models import (
 )
 from .models.database import init_db, test_connection, get_table_counts
 from .services import MockDataGenerator, TrainInductionOptimizer, AICopilot, FileProcessor
+from .services.simulation_service import SimulationService
 from .config import settings, is_ai_enabled, is_groq_enabled, is_cloudinary_enabled, get_service_status, is_postgresql
 
 # Create FastAPI app
@@ -1223,6 +1224,98 @@ async def run_scenario(data: Dict[str, Any], db: Session = Depends(get_db)):
             "ibl_change": plan.trains_ibl - (baseline.trains_ibl if baseline else 0)
         } if baseline else None
     }
+
+# ==================== Simulation Tool ====================
+
+@app.get("/api/simulation/stations")
+async def get_simulation_stations(db: Session = Depends(get_db)):
+    """Get list of KMRL stations for simulation"""
+    simulator = SimulationService(db)
+    return {
+        "stations": simulator.get_station_list(),
+        "total_stations": len(simulator.stations),
+        "route_length_km": 31.0
+    }
+
+@app.post("/api/simulation/passenger")
+async def run_passenger_simulation(data: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Run passenger handling simulation with AI reasoning.
+    
+    Parameters:
+    - time_of_day: "peak_morning" | "peak_evening" | "off_peak" | "late_night"
+    - special_event: Optional event type (e.g., "football_match", "festival")
+    - event_station: Station affected by event
+    - expected_crowd_multiplier: 1.0 = normal, 2.0 = double
+    - trains_available: Number of trains in service
+    - simulation_duration_minutes: Duration to simulate
+    """
+    simulator = SimulationService(db)
+    
+    params = {
+        "time_of_day": data.get("time_of_day", "off_peak"),
+        "special_event": data.get("special_event"),
+        "event_station": data.get("event_station"),
+        "expected_crowd_multiplier": float(data.get("expected_crowd_multiplier", 1.0)),
+        "trains_available": int(data.get("trains_available", 18)),
+        "simulation_duration_minutes": int(data.get("simulation_duration_minutes", 60))
+    }
+    
+    result = await simulator.run_passenger_simulation(params)
+    return result
+
+@app.post("/api/simulation/energy")
+async def run_energy_simulation(data: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Run energy optimization simulation with AI reasoning.
+    
+    Parameters:
+    - trains_in_service: Number of trains operating
+    - operating_hours: Hours of operation
+    - passenger_load_percent: Average load (0-100)
+    - hvac_mode: "full" | "eco" | "off"
+    - regen_braking: Enable regenerative braking
+    - coasting_optimization: Enable coasting
+    - speed_profile: "normal" | "eco" | "express"
+    """
+    simulator = SimulationService(db)
+    
+    params = {
+        "trains_in_service": int(data.get("trains_in_service", 18)),
+        "operating_hours": float(data.get("operating_hours", 16)),
+        "passenger_load_percent": float(data.get("passenger_load_percent", 60)),
+        "hvac_mode": data.get("hvac_mode", "full"),
+        "regen_braking": data.get("regen_braking", True),
+        "coasting_optimization": data.get("coasting_optimization", False),
+        "speed_profile": data.get("speed_profile", "normal")
+    }
+    
+    result = await simulator.run_energy_simulation(params)
+    return result
+
+@app.post("/api/simulation/combined")
+async def run_combined_simulation(data: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Run combined passenger + energy simulation for holistic optimization.
+    """
+    simulator = SimulationService(db)
+    
+    params = {
+        "time_of_day": data.get("time_of_day", "off_peak"),
+        "special_event": data.get("special_event"),
+        "event_station": data.get("event_station"),
+        "expected_crowd_multiplier": float(data.get("expected_crowd_multiplier", 1.0)),
+        "trains_in_service": int(data.get("trains_in_service", 18)),
+        "operating_hours": float(data.get("operating_hours", 1)),
+        "passenger_load_percent": float(data.get("passenger_load_percent", 60)),
+        "hvac_mode": data.get("hvac_mode", "full"),
+        "regen_braking": data.get("regen_braking", True),
+        "coasting_optimization": data.get("coasting_optimization", False),
+        "speed_profile": data.get("speed_profile", "normal")
+    }
+    
+    result = await simulator.run_combined_simulation(params)
+    return result
 
 # ==================== AI Copilot ====================
 

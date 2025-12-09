@@ -116,4 +116,10 @@ export const getDashboardSummary = () => api.get('/dashboard/summary')
 // Override Logs
 export const getOverrideLogs = (params = {}) => api.get('/override-logs', { params })
 
+// Simulation
+export const getSimulationStations = () => api.get('/simulation/stations')
+export const runPassengerSimulation = (params) => api.post('/simulation/passenger', params)
+export const runEnergySimulation = (params) => api.post('/simulation/energy', params)
+export const runCombinedSimulation = (params) => api.post('/simulation/combined', params)
+
 export default api
