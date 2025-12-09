@@ -10,25 +10,29 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { colors } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE_URL } from '../lib/api';
+import api from '../services/api';
 
-type AuthStep = 'phone' | 'otp';
+type AuthStep = 'phone' | 'otp' | 'role_select';
+type UserRole = 'admin' | 'supervisor' | 'worker';
 
-/**
- * Login Screen with OTP Authentication
- * 
- * DEV MODE: Simulates OTP for testing (any 6-digit code works)
- * PRODUCTION: Will use Firebase Phone Auth (requires native build)
- */
+const ROLES: { id: UserRole; label: string; icon: string; description: string }[] = [
+  { id: 'admin', label: 'Administrator', icon: '👑', description: 'Full system access' },
+  { id: 'supervisor', label: 'Supervisor', icon: '👔', description: 'Manage operations' },
+  { id: 'worker', label: 'Worker', icon: '🔧', description: 'View & basic tasks' },
+];
+
 const LoginScreen: React.FC = () => {
   const { login } = useAuth();
   const [step, setStep] = useState<AuthStep>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [selectedRole, setSelectedRole] = useState<UserRole>('worker');
   const [isLoading, setIsLoading] = useState(false);
+  const [serverOtp, setServerOtp] = useState<string | null>(null);
   
   const otpInputs = useRef<(TextInput | null)[]>([]);
 
@@ -45,13 +49,27 @@ const LoginScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // DEV MODE: Simulate OTP sent
-      // In production, integrate Firebase Phone Auth here
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setStep('otp');
-      Alert.alert('OTP Sent', `OTP sent to +91${phoneNumber}\n\n(Dev mode: Enter any 6 digits)`);
+      console.log('[Auth] Sending OTP to:', phoneNumber);
+      const response = await api.post('/auth/send-otp', {
+        phone_number: phoneNumber,
+      });
+
+      console.log('[Auth] OTP Response:', response.data);
+      
+      if (response.data.success) {
+        // Store dev OTP for display (remove in production)
+        if (response.data.dev_otp) {
+          setServerOtp(response.data.dev_otp);
+        }
+        setStep('otp');
+        Alert.alert(
+          'OTP Sent ✅',
+          `OTP sent to +91${phoneNumber}\n\nCheck backend terminal for OTP code.`
+        );
+      }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send OTP');
+      console.error('[Auth] Send OTP Error:', error);
+      Alert.alert('Error', error.response?.data?.detail || 'Failed to send OTP');
     } finally {
       setIsLoading(false);
     }
@@ -82,33 +100,38 @@ const LoginScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // DEV MODE: Generate mock token
-      // In production, verify with Firebase and get real ID token
-      const mockIdToken = `dev_token_${Date.now()}_${phoneNumber}`;
-      
-      // Verify with backend
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id_token: mockIdToken,
-          phone_number: `+91${phoneNumber}`,
-        }),
+      console.log('[Auth] Verifying OTP:', otpCode);
+      const response = await api.post('/auth/verify-otp', {
+        phone_number: phoneNumber,
+        otp: otpCode,
       });
 
-      const data = await response.json();
-      
-      if (response.ok && data.user) {
-        await login(mockIdToken, data.user);
-        Alert.alert('Success', `Welcome ${data.user.name || 'User'}!\nRole: ${data.user.role}`);
-      } else {
-        throw new Error(data.detail || 'Verification failed');
+      console.log('[Auth] Verify Response:', response.data);
+
+      if (response.data.success && response.data.user) {
+        const user = response.data.user;
+        const token = response.data.token;
+        
+        await login(token, user);
+        
+        Alert.alert(
+          'Login Successful ✅',
+          `Welcome!\n\nRole: ${user.role.toUpperCase()}\nPhone: ${user.phone_number}`
+        );
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to verify OTP');
+      console.error('[Auth] Verify OTP Error:', error);
+      Alert.alert('Error', error.response?.data?.detail || 'Invalid OTP');
     } finally {
       setIsLoading(false);
     }
+  };
+
+
+  const handleResend = () => {
+    setOtp(['', '', '', '', '', '']);
+    setServerOtp(null);
+    handleSendOTP();
   };
 
   return (
@@ -117,95 +140,123 @@ const LoginScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.content}
       >
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoEmoji}>🚇</Text>
-          </View>
-          <Text style={styles.logoTitle}>KMRL</Text>
-          <Text style={styles.logoSubtitle}>Induction Planner</Text>
-        </View>
-
-        {/* Login Form */}
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>
-            {step === 'phone' ? 'Login with Phone' : 'Enter OTP'}
-          </Text>
-          <Text style={styles.subtitle}>
-            {step === 'phone'
-              ? 'Enter your phone number to receive OTP'
-              : `OTP sent to +91${phoneNumber}`}
-          </Text>
-
-          {step === 'phone' ? (
-            <View style={styles.phoneInputContainer}>
-              <View style={styles.countryCode}>
-                <Text style={styles.countryCodeText}>+91</Text>
-              </View>
-              <TextInput
-                style={styles.phoneInput}
-                placeholder="Enter phone number"
-                placeholderTextColor={colors.text.muted}
-                keyboardType="phone-pad"
-                value={phoneNumber}
-                onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
-                maxLength={10}
-              />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIcon}>
+              <Text style={styles.logoEmoji}>🚇</Text>
             </View>
-          ) : (
-            <View style={styles.otpContainer}>
-              {otp.map((digit, index) => (
+            <Text style={styles.logoTitle}>KMRL</Text>
+            <Text style={styles.logoSubtitle}>Induction Planner</Text>
+          </View>
+
+          {/* Login Form */}
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>
+              {step === 'phone' ? 'Login with Phone' : 'Enter OTP'}
+            </Text>
+            <Text style={styles.subtitle}>
+              {step === 'phone'
+                ? 'Enter your phone number to receive OTP'
+                : `OTP sent to +91${phoneNumber}`}
+            </Text>
+
+            {step === 'phone' ? (
+              <View style={styles.phoneInputContainer}>
+                <View style={styles.countryCode}>
+                  <Text style={styles.countryCodeText}>+91</Text>
+                </View>
                 <TextInput
-                  key={index}
-                  ref={(ref) => (otpInputs.current[index] = ref)}
-                  style={styles.otpInput}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={(value) => handleOtpChange(value, index)}
-                  onKeyPress={({ nativeEvent }) =>
-                    handleOtpKeyPress(nativeEvent.key, index)
-                  }
+                  style={styles.phoneInput}
+                  placeholder="Enter phone number"
+                  placeholderTextColor={colors.text.muted}
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={(text) => setPhoneNumber(formatPhoneNumber(text))}
+                  maxLength={10}
                 />
-              ))}
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={step === 'phone' ? handleSendOTP : handleVerifyOTP}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              </View>
             ) : (
-              <Text style={styles.buttonText}>
-                {step === 'phone' ? 'Send OTP' : 'Verify OTP'}
-              </Text>
+              <>
+                <View style={styles.otpContainer}>
+                  {otp.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      ref={(ref) => (otpInputs.current[index] = ref)}
+                      style={styles.otpInput}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      value={digit}
+                      onChangeText={(value) => handleOtpChange(value, index)}
+                      onKeyPress={({ nativeEvent }) =>
+                        handleOtpKeyPress(nativeEvent.key, index)
+                      }
+                    />
+                  ))}
+                </View>
+                
+                {/* Show OTP hint in dev mode */}
+                {serverOtp && (
+                  <View style={styles.otpHint}>
+                    <Text style={styles.otpHintText}>
+                      🔑 Dev OTP: {serverOtp}
+                    </Text>
+                  </View>
+                )}
+              </>
             )}
-          </TouchableOpacity>
 
-          {step === 'otp' && (
             <TouchableOpacity
-              style={styles.resendButton}
-              onPress={() => {
-                setStep('phone');
-                setOtp(['', '', '', '', '', '']);
-              }}
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={step === 'phone' ? handleSendOTP : handleVerifyOTP}
+              disabled={isLoading}
             >
-              <Text style={styles.resendText}>Change phone number</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {step === 'phone' ? 'Send OTP' : 'Verify & Login'}
+                </Text>
+              )}
             </TouchableOpacity>
-          )}
 
-          {/* Dev mode indicator */}
-          <View style={styles.devBadge}>
-            <Text style={styles.devText}>🔧 Dev Mode - Any OTP works</Text>
+            {step === 'otp' && (
+              <View style={styles.otpActions}>
+                <TouchableOpacity onPress={handleResend}>
+                  <Text style={styles.resendText}>Resend OTP</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    setStep('phone');
+                    setOtp(['', '', '', '', '', '']);
+                    setServerOtp(null);
+                  }}
+                >
+                  <Text style={styles.changeText}>Change Number</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        </View>
+
+          {/* Role Info */}
+          <View style={styles.roleInfo}>
+            <Text style={styles.roleInfoTitle}>📋 Role-Based Access</Text>
+            {ROLES.map((role) => (
+              <View key={role.id} style={styles.roleItem}>
+                <Text style={styles.roleIcon}>{role.icon}</Text>
+                <View>
+                  <Text style={styles.roleLabel}>{role.label}</Text>
+                  <Text style={styles.roleDesc}>{role.description}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -214,12 +265,16 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingVertical: 40,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 32,
   },
   logoIcon: {
     width: 80,
@@ -248,6 +303,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.secondary,
     borderRadius: 16,
     padding: 24,
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
@@ -289,7 +345,7 @@ const styles = StyleSheet.create({
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    marginBottom: 16,
     gap: 8,
   },
   otpInput: {
@@ -302,6 +358,18 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     textAlign: 'center',
     minWidth: 40,
+  },
+  otpHint: {
+    backgroundColor: colors.green[500] + '20',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  otpHintText: {
+    color: colors.green[400],
+    fontSize: 16,
+    fontWeight: '600',
   },
   button: {
     backgroundColor: colors.primary[600],
@@ -317,24 +385,47 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
-  resendButton: {
+  otpActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 16,
-    alignItems: 'center',
   },
   resendText: {
     fontSize: 14,
     color: colors.primary[400],
   },
-  devBadge: {
-    marginTop: 20,
-    padding: 8,
-    backgroundColor: colors.amber[500] + '20',
-    borderRadius: 8,
-    alignItems: 'center',
+  changeText: {
+    fontSize: 14,
+    color: colors.text.muted,
   },
-  devText: {
-    fontSize: 12,
-    color: colors.amber[400],
+  roleInfo: {
+    backgroundColor: colors.bg.secondary,
+    borderRadius: 16,
+    padding: 16,
+  },
+  roleInfoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 12,
+  },
+  roleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 12,
+  },
+  roleIcon: {
+    fontSize: 20,
+  },
+  roleLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.text.primary,
+  },
+  roleDesc: {
+    fontSize: 11,
+    color: colors.text.muted,
   },
 });
 

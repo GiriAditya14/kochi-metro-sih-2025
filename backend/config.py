@@ -13,6 +13,17 @@ import os
 # Database
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./kmrl_induction.db")
 
+
+def get_database_url() -> str:
+    """Get database URL from environment or use SQLite default"""
+    return os.getenv("DATABASE_URL", "sqlite:///./kmrl_induction.db")
+
+
+def is_postgresql() -> bool:
+    """Check if using PostgreSQL database"""
+    db_url = get_database_url()
+    return db_url.startswith("postgresql://") or db_url.startswith("postgres://")
+
 # Google Gemini API Key (for AI Copilot)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 

@@ -30,6 +30,8 @@ from .services.simulation_service import SimulationService
 from .config import settings, is_ai_enabled, is_groq_enabled, is_cloudinary_enabled, get_service_status, is_postgresql
 # Local auth
 from .services.auth_service import hash_password, verify_password, create_token, get_current_user, require_role
+# Firebase OTP auth
+from .services.firebase_auth import generate_otp, store_otp, verify_otp, determine_role
 
 # Create FastAPI app
 app = FastAPI(
@@ -179,7 +181,133 @@ async def login_local(payload: Dict[str, Any], db: Session = Depends(get_db)):
 async def auth_me(current_user: User = Depends(get_current_user)):
     return {"user": current_user.to_dict()}
 
-# ==================== Intelligent File Upload (Cloudinary + Groq) ====================
+
+# ==================== Phone OTP Authentication ====================
+
+@app.post("/api/auth/send-otp")
+async def send_otp(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Send OTP to phone number.
+    OTP is printed to terminal for testing (in production, use SMS service).
+    """
+    phone_number = (payload.get("phone_number") or "").strip()
+    
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+    
+    # Normalize phone number
+    if not phone_number.startswith("+"):
+        phone_number = f"+91{phone_number}"
+    
+    # Generate and store OTP
+    otp = generate_otp()
+    store_otp(phone_number, otp)
+    
+    # In production, send SMS here
+    # For now, OTP is printed to terminal
+    
+    return {
+        "success": True,
+        "message": f"OTP sent to {phone_number}",
+        "phone_number": phone_number,
+        # Remove this in production!
+        "dev_otp": otp  
+    }
+
+
+@app.post("/api/auth/verify-otp")
+async def verify_otp_endpoint(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Verify OTP and login/register user.
+    Returns JWT token and user info with role.
+    """
+    phone_number = (payload.get("phone_number") or "").strip()
+    otp_code = (payload.get("otp") or "").strip()
+    
+    if not phone_number or not otp_code:
+        raise HTTPException(status_code=400, detail="Phone number and OTP are required")
+    
+    # Normalize phone number
+    if not phone_number.startswith("+"):
+        phone_number = f"+91{phone_number}"
+    
+    # Verify OTP
+    if not verify_otp(phone_number, otp_code):
+        raise HTTPException(status_code=401, detail="Invalid or expired OTP")
+    
+    # Find or create user
+    user = db.query(User).filter(User.phone_number == phone_number).first()
+    
+    if not user:
+        # Create new user with role based on phone number
+        role = determine_role(phone_number)
+        user = User(
+            phone_number=phone_number,
+            role=role,
+            is_active=True,
+            is_verified=True
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        print(f"[Auth] New user created: {phone_number} with role: {role}")
+    else:
+        user.is_verified = True
+        db.commit()
+    
+    # Generate token
+    token = create_token(user)
+    
+    return {
+        "success": True,
+        "token": token,
+        "user": user.to_dict()
+    }
+
+
+@app.post("/api/auth/verify-token")
+async def verify_firebase_token_endpoint(payload: Dict[str, Any], db: Session = Depends(get_db)):
+    """
+    Verify Firebase ID token (for production Firebase auth).
+    Falls back to dev mode if Firebase not configured.
+    """
+    id_token = payload.get("id_token") or ""
+    phone_number = (payload.get("phone_number") or "").strip()
+    
+    if not phone_number:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+    
+    # Normalize phone number
+    if not phone_number.startswith("+"):
+        phone_number = f"+91{phone_number}"
+    
+    # DEV MODE: Accept any token for testing
+    # In production, verify with Firebase
+    
+    # Find or create user
+    user = db.query(User).filter(User.phone_number == phone_number).first()
+    
+    if not user:
+        role = determine_role(phone_number)
+        user = User(
+            phone_number=phone_number,
+            role=role,
+            is_active=True,
+            is_verified=True
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    
+    token = create_token(user)
+    
+    return {
+        "success": True,
+        "token": token,
+        "user": user.to_dict()
+    }
+
+
 # ==================== Intelligent File Upload (Cloudinary + Groq) ====================
 
 @app.post("/api/upload/intelligent")

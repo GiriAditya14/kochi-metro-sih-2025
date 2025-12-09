@@ -4,9 +4,21 @@ Production-ready settings with PostgreSQL, Cloudinary, and AI services.
 """
 
 import os
+import pathlib
 from typing import Optional
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+# Load .env file FIRST before anything else
+_backend_dir = pathlib.Path(__file__).parent.parent
+_env_file = _backend_dir / ".env"
+if _env_file.exists():
+    load_dotenv(_env_file)
+    print(f"✓ Loaded .env from {_env_file}")
+else:
+    load_dotenv()
+    print("⚠ No .env file found, using defaults")
 
 
 class Settings(BaseSettings):

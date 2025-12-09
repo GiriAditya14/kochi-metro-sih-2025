@@ -11,6 +11,7 @@ import TrainDetailScreen from '../screens/TrainDetailScreen';
 import AICopilotScreen from '../screens/AICopilotScreen';
 import LoginScreen from '../screens/LoginScreen';
 import DataInjectionScreen from '../screens/DataInjectionScreen';
+import FileImportScreen from '../screens/FileImportScreen';
 import { colors } from '../lib/utils';
 import { useAuth, ROLE_PERMISSIONS } from '../context/AuthContext';
 
@@ -23,6 +24,7 @@ export type RootStackParamList = {
   TrainDetail: { trainId: number | string };
   AICopilot: undefined;
   DataInjection: undefined;
+  FileImport: undefined;
 };
 
 const Drawer = createDrawerNavigator();
@@ -44,6 +46,7 @@ const MainStack = () => (
     <Stack.Screen name="TrainDetail" component={TrainDetailScreen} />
     <Stack.Screen name="AICopilot" component={AICopilotScreen} />
     <Stack.Screen name="DataInjection" component={DataInjectionScreen} />
+    <Stack.Screen name="FileImport" component={FileImportScreen} />
   </Stack.Navigator>
 );
 
@@ -54,6 +57,7 @@ const navItems = [
   { name: 'WhatIfSimulator', label: 'What-If Simulator', icon: '🧪', feature: 'whatIfSimulator' as const },
   { name: 'DataPlayground', label: 'Data Playground', icon: '💾', feature: 'dataPlayground' as const },
   { name: 'DataInjection', label: 'Data Injection', icon: '📤', feature: 'dataInjection' as const },
+  { name: 'FileImport', label: 'File Import', icon: '📁', feature: 'dataInjection' as const },
   { name: 'Alerts', label: 'Alerts', icon: '🔔', feature: 'alerts' as const },
 ];
 
