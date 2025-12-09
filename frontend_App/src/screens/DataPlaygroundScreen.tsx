@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  SafeAreaView,
 } from 'react-native';
 import { getTrains, getCertificates, getJobCards, getBrandingContracts, getMileage, getCleaningRecords, generateMockData } from '../lib/api';
 import { mockTrains, mockCertificates, mockJobCards, mockBranding, mockMileage, mockCleaning } from '../data/mockData';
 import { colors, getStatusColors, getScoreColor } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 type TabType = 'trains' | 'certificates' | 'jobs' | 'branding' | 'mileage' | 'cleaning';
 
@@ -33,12 +35,28 @@ const StatusBadge = ({ value, type = 'status' }: { value: string; type?: 'status
 };
 
 export default function DataPlaygroundScreen() {
+  const { canAccess } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('trains');
   const [data, setData] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Check access
+  if (!canAccess('dataPlayground')) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.noAccess}>
+          <Text style={styles.noAccessIcon}>🔒</Text>
+          <Text style={styles.noAccessTitle}>Access Restricted</Text>
+          <Text style={styles.noAccessText}>
+            You need Worker or Admin role to access the Data Playground.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const fetchData = async () => {
     setLoading(true);
@@ -602,5 +620,26 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 32,
+  },
+  noAccess: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  noAccessIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  noAccessTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  noAccessText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
 });

@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   TextInput,
+  SafeAreaView,
 } from 'react-native';
 import { getTrains, getPlans, runScenario, parseScenario } from '../lib/api';
 import { mockTrains, mockPlans } from '../data/mockData';
 import { colors } from '../lib/utils';
+import { useAuth } from '../context/AuthContext';
 
 interface Train {
   id: number;
@@ -62,6 +64,7 @@ const ComparisonCard = ({
 };
 
 export default function WhatIfSimulatorScreen() {
+  const { canAccess } = useAuth();
   const [trains, setTrains] = useState<Train[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [baselinePlan, setBaselinePlan] = useState<Plan | null>(null);
@@ -75,6 +78,21 @@ export default function WhatIfSimulatorScreen() {
   const [brandingWeight, setBrandingWeight] = useState(80);
   const [naturalLanguage, setNaturalLanguage] = useState('');
   const [parseLoading, setParsing] = useState(false);
+
+  // Check access
+  if (!canAccess('whatIfSimulator')) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.noAccess}>
+          <Text style={styles.noAccessIcon}>🔒</Text>
+          <Text style={styles.noAccessTitle}>Access Restricted</Text>
+          <Text style={styles.noAccessText}>
+            You need Worker or Admin role to use the What-If Simulator.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -780,5 +798,26 @@ const styles = StyleSheet.create({
   },
   spacer: {
     height: 32,
+  },
+  noAccess: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  noAccessIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  noAccessTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.text.primary,
+    marginBottom: 8,
+  },
+  noAccessText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
   },
 });
