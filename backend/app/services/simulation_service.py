@@ -537,7 +537,7 @@ Be specific to KMRL operations and Kerala context. Use bullet points."""
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are an expert metro rail operations analyst specializing in crowd management and passenger safety."},
                     {"role": "user", "content": prompt}
@@ -550,7 +550,7 @@ Be specific to KMRL operations and Kerala context. Use bullet points."""
             
             return {
                 "status": "success",
-                "model": "llama-3.1-70b-versatile",
+                "model": "llama-3.3-70b-versatile",
                 "reasoning": reasoning_text,
                 "generated_at": datetime.utcnow().isoformat()
             }
@@ -603,7 +603,7 @@ Focus on practical, implementable recommendations for KMRL. Include specific num
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are an expert in metro rail energy efficiency and sustainable transportation systems."},
                     {"role": "user", "content": prompt}
@@ -616,7 +616,7 @@ Focus on practical, implementable recommendations for KMRL. Include specific num
             
             return {
                 "status": "success",
-                "model": "llama-3.1-70b-versatile",
+                "model": "llama-3.3-70b-versatile",
                 "reasoning": reasoning_text,
                 "generated_at": datetime.utcnow().isoformat()
             }
@@ -661,7 +661,7 @@ Be specific with numbers and actionable recommendations."""
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are a senior metro rail operations strategist focusing on balancing passenger service with operational efficiency."},
                     {"role": "user", "content": prompt}
@@ -674,7 +674,7 @@ Be specific with numbers and actionable recommendations."""
             
             return {
                 "status": "success",
-                "model": "llama-3.1-70b-versatile",
+                "model": "llama-3.3-70b-versatile",
                 "reasoning": reasoning_text,
                 "generated_at": datetime.utcnow().isoformat()
             }
@@ -1063,7 +1063,7 @@ Be specific with INR amounts and train numbers."""
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are a commercial and operations expert specializing in metro advertising contracts and SLA compliance."},
                     {"role": "user", "content": prompt}
@@ -1074,7 +1074,7 @@ Be specific with INR amounts and train numbers."""
             
             return {
                 "status": "success",
-                "model": "llama-3.1-70b-versatile",
+                "model": "llama-3.3-70b-versatile",
                 "reasoning": response.choices[0].message.content,
                 "generated_at": datetime.utcnow().isoformat()
             }
@@ -1480,7 +1480,7 @@ Focus on practical depot operations for KMRL Muttom depot."""
 
         try:
             response = self.groq_client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+                model="llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": "You are a metro depot operations expert specializing in train shunting, positioning, and overnight planning."},
                     {"role": "user", "content": prompt}
@@ -1491,7 +1491,7 @@ Focus on practical depot operations for KMRL Muttom depot."""
             
             return {
                 "status": "success",
-                "model": "llama-3.1-70b-versatile",
+                "model": "llama-3.3-70b-versatile",
                 "reasoning": response.choices[0].message.content,
                 "generated_at": datetime.utcnow().isoformat()
             }

@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     
     # Groq LLM - for fast data parsing and extraction
     groq_api_key: Optional[str] = None
-    groq_model: str = "llama-3.1-70b-versatile"  # or mixtral-8x7b-32768
+    groq_model: str = "llama-3.3-70b-versatile"  # Updated model (llama-3.1 was deprecated)
     
     # ===========================================
     # FILE STORAGE (Cloudinary)

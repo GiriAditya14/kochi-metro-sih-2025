@@ -1409,7 +1409,8 @@ async def copilot_chat(data: Dict[str, Any], db: Session = Depends(get_db)):
                 if assignment:
                     context["assignment"] = assignment.to_dict()
     
-    response = copilot.chat(message, context)
+    # Use async method directly
+    response = await copilot.answer_question(message, context)
     
     return {
         "response": response,
@@ -1420,7 +1421,25 @@ async def copilot_chat(data: Dict[str, Any], db: Session = Depends(get_db)):
 @app.post("/api/copilot/explain-plan")
 async def explain_plan_endpoint(plan_id: int, db: Session = Depends(get_db)):
     copilot = AICopilot(db)
-    explanation = copilot.explain_plan(plan_id)
+    
+    plan = db.query(NightPlan).filter(NightPlan.id == plan_id).first()
+    if not plan:
+        return {"explanation": "Plan not found.", "plan_id": plan_id, "ai_enabled": copilot.ai_enabled}
+    
+    assignments = db.query(PlanAssignment).filter(
+        PlanAssignment.plan_id == plan_id
+    ).all()
+    
+    assignment_dicts = []
+    for a in assignments:
+        train = db.query(Train).filter(Train.id == a.train_id).first()
+        assignment_dicts.append({
+            **a.to_dict(),
+            'train': train.to_dict() if train else None
+        })
+    
+    # Use async method directly
+    explanation = await copilot.generate_plan_explanation(plan, assignment_dicts)
     
     return {
         "explanation": explanation,
